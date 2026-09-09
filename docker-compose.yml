@@ -28,7 +28,7 @@ services:
     build: .
     container_name: naps-ccc-app
     ports:
-      - "3100:3000"
+      - "3110:3000"
     env_file: .env.docker
     depends_on:
       app-db:

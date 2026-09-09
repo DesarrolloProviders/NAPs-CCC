@@ -10,7 +10,7 @@ beforeAll(() => {
     SPI40_CACHE_TTL_MS: "1000",
     OLT_BASE_URL: "http://olt.test/tools.php",
     BETTER_AUTH_SECRET: "0123456789abcdef0123456789abcdef",
-    BETTER_AUTH_URL: "http://localhost:3100",
+    BETTER_AUTH_URL: "http://localhost:3110",
     ADMIN_SEED_EMAIL: "a@b.co",
     ADMIN_SEED_PASSWORD: "0123456789",
     CRON_SECRET: "12345678",

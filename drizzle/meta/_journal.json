@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788966465411,
+      "tag": "0000_auth_y_reservas",
+      "breakpoints": true
+    }
+  ]
+}
