@@ -1,0 +1,114 @@
+[
+  {
+    "result_ok": true,
+    "id_request": 14054398,
+    "id_transaction": 13370618,
+    "errors": [],
+    "records": [
+      {
+        "id_nodo": 45638,
+        "id_padre": 45612,
+        "puerto": 1,
+        "estado": 2,
+        "tipo": 0,
+        "descripcion": "",
+        "id_cli": 0,
+        "denominacion_cli": "",
+        "mac_ont": "",
+        "serial_ont": "",
+        "modelo_ont": ""
+      },
+      {
+        "id_nodo": 45639,
+        "id_padre": 45612,
+        "puerto": 2,
+        "estado": 4,
+        "tipo": 22002,
+        "descripcion": "ONU DCN - DCEG164-VC1200 1-USB DUAL BAND NACIONAL ()",
+        "id_cli": 1008032,
+        "denominacion_cli": "Herrera, Luisa",
+        "mac_ont": "fcc0cc22c8e7",
+        "serial_ont": "48575443cc22c8e7",
+        "modelo_ont": "DCN DCEG164-C-1200"
+      },
+      {
+        "id_nodo": 45640,
+        "id_padre": 45612,
+        "puerto": 3,
+        "estado": 4,
+        "tipo": 22002,
+        "descripcion": "ONU DCN - DCEG164-VC1200 1-USB DUAL BAND NACIONAL ()",
+        "id_cli": 1009012,
+        "denominacion_cli": "Frias, Pedro SebastiÃ¡n",
+        "mac_ont": "fcc0cc22ce47",
+        "serial_ont": "48575443cc22ce47",
+        "modelo_ont": "DCN DCEG164-C-1200"
+      },
+      {
+        "id_nodo": 45641,
+        "id_padre": 45612,
+        "puerto": 4,
+        "estado": 2,
+        "tipo": 0,
+        "descripcion": "",
+        "id_cli": 0,
+        "denominacion_cli": "",
+        "mac_ont": "",
+        "serial_ont": "",
+        "modelo_ont": ""
+      },
+      {
+        "id_nodo": 45642,
+        "id_padre": 45612,
+        "puerto": 5,
+        "estado": 2,
+        "tipo": 0,
+        "descripcion": "",
+        "id_cli": 0,
+        "denominacion_cli": "",
+        "mac_ont": "",
+        "serial_ont": "",
+        "modelo_ont": ""
+      },
+      {
+        "id_nodo": 45643,
+        "id_padre": 45612,
+        "puerto": 6,
+        "estado": 2,
+        "tipo": 0,
+        "descripcion": "",
+        "id_cli": 0,
+        "denominacion_cli": "",
+        "mac_ont": "",
+        "serial_ont": "",
+        "modelo_ont": ""
+      },
+      {
+        "id_nodo": 45644,
+        "id_padre": 45612,
+        "puerto": 7,
+        "estado": 2,
+        "tipo": 0,
+        "descripcion": "",
+        "id_cli": 0,
+        "denominacion_cli": "",
+        "mac_ont": "",
+        "serial_ont": "",
+        "modelo_ont": ""
+      },
+      {
+        "id_nodo": 45645,
+        "id_padre": 45612,
+        "puerto": 8,
+        "estado": 2,
+        "tipo": 0,
+        "descripcion": "",
+        "id_cli": 0,
+        "denominacion_cli": "",
+        "mac_ont": "",
+        "serial_ont": "",
+        "modelo_ont": ""
+      }
+    ]
+  }
+]

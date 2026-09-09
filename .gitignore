@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# naps-ccc-nextjs
+.env.local
+.env.docker
+/playwright-report
+/test-results
+/tests/e2e/.auth
