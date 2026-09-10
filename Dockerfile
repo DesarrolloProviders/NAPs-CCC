@@ -38,8 +38,10 @@ RUN apk add --no-cache tzdata curl && addgroup -S app && adduser -S app -G app
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
 COPY --from=build --chown=app:app /app/public ./public
-# Migraciones SQL y utilitarios de arranque en JS plano (usan los módulos ya presentes en node_modules del standalone)
+# Migraciones SQL y utilitarios de arranque en JS plano. El trazado del standalone solo copia los archivos que la app
+# importa, así que drizzle-orm se copia completo (el migrator no está trazado); no tiene dependencias propias.
 COPY --from=build --chown=app:app /app/drizzle ./drizzle
+COPY --from=build --chown=app:app /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --chown=app:app docker/entrypoint.sh docker/migrate.mjs docker/seed-admin.mjs ./docker/
 RUN chmod +x ./docker/entrypoint.sh
 
