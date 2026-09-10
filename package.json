@@ -20,7 +20,8 @@
     "import:reservas": "tsx -C react-server scripts/import-reservas.ts",
     "probe:gis": "tsx -C react-server scripts/probe-gis.ts",
     "probe:spi40": "tsx -C react-server scripts/probe-spi40.ts",
-    "probe:olt": "tsx -C react-server scripts/probe-olt.ts"
+    "probe:olt": "tsx -C react-server scripts/probe-olt.ts",
+    "vencer:reservas": "tsx -C react-server scripts/vencer-reservas.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

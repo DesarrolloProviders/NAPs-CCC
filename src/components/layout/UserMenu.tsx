@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -35,11 +36,13 @@ export function UserMenu({ actor }: { actor: Actor }) {
         }
       />
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="text-sm font-medium">{actor.nombre}</div>
-          <div className="text-xs text-muted-foreground">{actor.email}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{ETIQUETA_ROL[actor.rol]}</div>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>
+            <div className="text-sm font-medium text-foreground">{actor.nombre}</div>
+            <div className="text-xs text-muted-foreground">{actor.email}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{ETIQUETA_ROL[actor.rol]}</div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={salir}>
           <LogOut className="size-4" aria-hidden />

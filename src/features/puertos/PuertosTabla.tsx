@@ -9,6 +9,8 @@ import { EstadoOnlineCell } from "@/features/puertos/EstadoOnlineCell";
 import { ETIQUETA_ESTADO, type EstadoPuerto } from "@/features/puertos/estado-puerto";
 import type { PuertoVista } from "@/features/puertos/fusionar-puertos";
 import { useOltStatus } from "@/features/puertos/use-olt-status";
+import { PuertoAcciones } from "@/features/reservas/PuertoAcciones";
+import type { Rol } from "@/lib/auth/permissions";
 import { formatoCorto } from "@/lib/fechas";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +25,13 @@ const CLASE_ESTADO: Record<EstadoPuerto, string> = {
 interface Props {
   idNap: string;
   puertos: PuertoVista[];
-  /** Columna de acciones (reservar / liberar / instalar) inyectada por la página según el rol. */
-  acciones?: (p: PuertoVista) => React.ReactNode;
+  /** Rol del usuario: define qué acciones se muestran por puerto (la autorización real es del servidor). */
+  rol: Rol;
+  diasDefault: number;
+  diasMax: number;
 }
 
-export function PuertosTabla({ idNap, puertos, acciones }: Props) {
+export function PuertosTabla({ idNap, puertos, rol, diasDefault, diasMax }: Props) {
   const hayOnts = puertos.some((p) => p.macOnt);
   const olt = useOltStatus(idNap, hayOnts);
   const qc = useQueryClient();
@@ -65,7 +69,7 @@ export function PuertosTabla({ idNap, puertos, acciones }: Props) {
             <TableHead>Cliente</TableHead>
             <TableHead>ONT</TableHead>
             <TableHead>OLT</TableHead>
-            {acciones ? <TableHead className="text-right">Acciones</TableHead> : null}
+            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -111,7 +115,9 @@ export function PuertosTabla({ idNap, puertos, acciones }: Props) {
                 <TableCell>
                   <EstadoOnlineCell mac={p.macOnt} estado={estadoOlt} cargando={olt.isPending} />
                 </TableCell>
-                {acciones ? <TableCell className="text-right">{acciones(p)}</TableCell> : null}
+                <TableCell className="text-right">
+                  <PuertoAcciones idNap={idNap} puerto={p} rol={rol} diasDefault={diasDefault} diasMax={diasMax} />
+                </TableCell>
               </TableRow>
             );
           })}

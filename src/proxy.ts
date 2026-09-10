@@ -5,7 +5,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * Chequeo OPTIMISTA de sesión (solo mira que exista la cookie) para redirigir rápido a /login.
  * La verificación real de la sesión la hace cada página/acción en el servidor (getSession).
  */
-const PUBLICAS = ["/login", "/api/auth", "/api/health"];
+// /api/cron valida su propio secreto (no usa sesión)
+const PUBLICAS = ["/login", "/api/auth", "/api/health", "/api/cron"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
