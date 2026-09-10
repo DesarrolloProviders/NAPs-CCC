@@ -1,6 +1,5 @@
 "use client";
 
-import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +48,7 @@ export function ResultadosLista({ naps, seleccionada, onSeleccionar }: Props) {
                 <div className="flex items-center gap-2">
                   <span className="text-xs tabular-nums text-muted-foreground">{i + 1}.</span>
                   <Link
-                    href={`/naps/${encodeURIComponent(n.idNap)}` as Route}
+                    href={`/naps/${encodeURIComponent(n.idNap)}`}
                     className="truncate font-medium hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >

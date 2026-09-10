@@ -41,14 +41,35 @@ export function decodificarRespuesta(texto: string): unknown {
 
   const utf8 = bytes.toString("utf8");
   try {
-    if (!utf8.includes("�")) return JSON.parse(utf8);
+    if (!utf8.includes("�")) return repararMojibakeProfundo(JSON.parse(utf8));
   } catch {
     // cae al intento latin1
   }
   const latin1 = bytes.toString("latin1");
   try {
-    return JSON.parse(latin1);
+    return repararMojibakeProfundo(JSON.parse(latin1));
   } catch (e) {
     throw new DecodeError(`JSON inválido: ${(e as Error).message}`, latin1.slice(0, 120));
   }
+}
+
+// El PHP de spi40 a veces codifica dos veces: "Sebastián" llega como "SebastiÃ¡n". Se detecta por las secuencias
+// típicas (Ã + carácter latin1) y se revierte reinterpretando los bytes.
+const MOJIBAKE_REGEX = /Ã[-¿]|Â[-¿]/;
+
+export function repararMojibake(s: string): string {
+  if (!MOJIBAKE_REGEX.test(s)) return s;
+  const arreglado = Buffer.from(s, "latin1").toString("utf8");
+  return arreglado.includes("�") ? s : arreglado;
+}
+
+export function repararMojibakeProfundo<T>(valor: T): T {
+  if (typeof valor === "string") return repararMojibake(valor) as T;
+  if (Array.isArray(valor)) return valor.map(repararMojibakeProfundo) as T;
+  if (valor && typeof valor === "object") {
+    const salida: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(valor as Record<string, unknown>)) salida[k] = repararMojibakeProfundo(v);
+    return salida as T;
+  }
+  return valor;
 }

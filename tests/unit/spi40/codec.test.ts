@@ -43,6 +43,15 @@ describe("decodificarRespuesta", () => {
     expect(decodificarRespuesta(b64)).toEqual(sobre);
   });
 
+  it("repara nombres con doble codificación (mojibake) sin tocar los correctos", () => {
+    const conMojibake = [{ result_ok: true, records: [{ denominacion_cli: "Frias, Pedro SebastiÃ¡n", otro: "Ñandú correcto", n: 3 }] }];
+    const b64 = Buffer.from(JSON.stringify(conMojibake), "utf8").toString("base64");
+    const r = decodificarRespuesta(b64) as typeof conMojibake;
+    expect(r[0]?.records[0]?.denominacion_cli).toBe("Frias, Pedro Sebastián");
+    expect(r[0]?.records[0]?.otro).toBe("Ñandú correcto");
+    expect(r[0]?.records[0]?.n).toBe(3);
+  });
+
   it("lanza DecodeError ante vacío, no-base64 o JSON inválido", () => {
     expect(() => decodificarRespuesta("")).toThrow(DecodeError);
     expect(() => decodificarRespuesta("<html>error</html>")).toThrow(DecodeError);
