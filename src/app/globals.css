@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+/* Leaflet necesita altura explícita del contenedor y no debe tapar los diálogos de la app */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+  font: inherit;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 0.5rem;
+}

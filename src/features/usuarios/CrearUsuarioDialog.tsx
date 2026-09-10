@@ -88,7 +88,7 @@ export function CrearUsuarioDialog() {
             <Label htmlFor="rol">Rol</Label>
             <Select value={rol} onValueChange={(v) => setRol(v as Rol)}>
               <SelectTrigger id="rol" className="w-full">
-                <SelectValue />
+                <SelectValue>{ETIQUETA_ROL[rol]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {ROLES.map((r) => (

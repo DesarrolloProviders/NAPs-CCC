@@ -1,13 +1,70 @@
 import type { Metadata } from "next";
+import { ZodError } from "zod";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BuscarForm } from "@/features/naps/BuscarForm";
+import { BuscarResultados } from "@/features/naps/BuscarResultados";
+import { buscarNaps, limitesBusqueda, listarLocalidades } from "@/features/naps/queries";
+import { parsearBusqueda, type BusquedaParams } from "@/features/naps/search-params";
+import { loggerDe } from "@/lib/logger";
 
 export const metadata: Metadata = { title: "Buscar NAPs" };
+export const dynamic = "force-dynamic";
 
-// Placeholder de la Fase 3; la Fase 4 reemplaza esta página por la búsqueda con mapa.
-export default function BuscarPage() {
+const log = loggerDe("http");
+
+export default async function BuscarPage({ searchParams }: PageProps<"/buscar">) {
+  const sp = await searchParams;
+  const limites = limitesBusqueda();
+
+  let params: BusquedaParams | null = null;
+  let errorParams: string | null = null;
+  try {
+    params = parsearBusqueda(sp, limites.radioMax);
+  } catch (e) {
+    errorParams = e instanceof ZodError ? "Los parámetros de la búsqueda no son válidos. Revisá coordenadas y radio." : "Búsqueda inválida.";
+  }
+
+  const [localidades, resultado, errorBusqueda] = await Promise.all([
+    listarLocalidades().catch((e) => {
+      log.error({ error: String(e) }, "listarLocalidades falló");
+      return [] as string[];
+    }),
+    params ? buscarNaps(params).catch(() => null) : Promise.resolve(null),
+    Promise.resolve(null as string | null),
+  ]);
+  const fallaGis = params !== null && resultado === null ? "No se pudo consultar la base de NAPs (PostGIS). Reintentá en unos segundos." : errorBusqueda;
+
   return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold">Buscar NAPs</h1>
-      <p className="text-muted-foreground">La búsqueda por coordenadas y radio se habilita en la siguiente fase.</p>
+    <div className="flex flex-1 flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold">Buscar NAPs</h1>
+          <p className="text-sm text-muted-foreground">Ingresá coordenadas y un radio para ver las NAPs cercanas, ordenadas por distancia.</p>
+        </div>
+      </div>
+
+      <BuscarForm inicial={params} localidades={localidades} radioMax={limites.radioMax} radioDefault={limites.radioDefault} />
+
+      {errorParams ? (
+        <Alert variant="destructive">
+          <AlertTitle>Búsqueda inválida</AlertTitle>
+          <AlertDescription>{errorParams}</AlertDescription>
+        </Alert>
+      ) : null}
+      {fallaGis ? (
+        <Alert variant="destructive">
+          <AlertTitle>Sin conexión con la base de NAPs</AlertTitle>
+          <AlertDescription>{fallaGis}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {params && resultado ? (
+        <BuscarResultados params={params} naps={resultado.naps} truncado={resultado.truncado} limite={resultado.limite} />
+      ) : !params && !errorParams ? (
+        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          Pegá coordenadas (por ejemplo desde Google Maps) y presioná Buscar. También podés hacer click en el mapa una vez que haya resultados.
+        </div>
+      ) : null}
     </div>
   );
 }

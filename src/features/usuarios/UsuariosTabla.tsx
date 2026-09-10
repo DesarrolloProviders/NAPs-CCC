@@ -58,7 +58,7 @@ export function UsuariosTabla({ usuarios, actorId }: { usuarios: UsuarioVista[];
                   disabled={pendiente || esYo}
                 >
                   <SelectTrigger className="w-40" aria-label={`Rol de ${u.email}`}>
-                    <SelectValue />
+                    <SelectValue>{ETIQUETA_ROL[u.rol as Rol] ?? u.rol}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {ROLES.map((r) => (
