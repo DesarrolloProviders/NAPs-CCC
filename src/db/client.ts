@@ -4,7 +4,7 @@ import postgres, { type Sql } from "postgres";
 import { env } from "@/lib/env";
 import * as schema from "@/db/schema";
 
-/** Base propia del proyecto (usuarios, reservas, auditoría). */
+/** Base propia del proyecto (usuarios y sesiones). */
 declare global {
   var __appSql: Sql | undefined;
 }

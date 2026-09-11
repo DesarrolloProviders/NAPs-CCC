@@ -13,7 +13,7 @@ export const user = pgTable("user", {
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull().defaultNow(),
   // plugin admin
-  role: text("role").notNull().default("ventas"),
+  role: text("role").notNull().default("usuario"),
   banned: boolean("banned").notNull().default(false),
   banReason: text("banReason"),
   banExpires: timestamp("banExpires", { withTimezone: true }),

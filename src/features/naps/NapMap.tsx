@@ -7,6 +7,7 @@ import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap, u
 import { COLOR_NIVEL, ETIQUETA_NIVEL, nivelDisponibilidad } from "@/features/naps/colores";
 import { formatoMetros } from "@/lib/geo/formato";
 import type { NapResumen } from "@/lib/gis/schema";
+import { cn } from "@/lib/utils";
 
 export interface NapMapProps {
   centro: { lat: number; lon: number };
@@ -17,6 +18,10 @@ export interface NapMapProps {
   onMoverPunto?: (lat: number, lon: number) => void;
   /** Modo detalle: sin círculo grande ni click para mover. */
   compacto?: boolean;
+  /** false mientras no hay búsqueda: se ve el mapa vacío, sin punto ni círculo. */
+  marcarCentro?: boolean;
+  /** Radio (m) para encuadrar la vista; por defecto, el radio de búsqueda. */
+  radioVista?: number;
 }
 
 // Ícono del punto buscado como SVG inline: evita el problema de los PNG de Leaflet con bundlers.
@@ -62,7 +67,17 @@ function EnfocarSeleccion({ seleccionada, naps }: { seleccionada: string | null;
   return null;
 }
 
-export default function NapMap({ centro, radio, naps, seleccionada, onSeleccionar, onMoverPunto, compacto = false }: NapMapProps) {
+export default function NapMap({
+  centro,
+  radio,
+  naps,
+  seleccionada,
+  onSeleccionar,
+  onMoverPunto,
+  compacto = false,
+  marcarCentro = true,
+  radioVista,
+}: NapMapProps) {
   const marcadores = useRef(new Map<string, L.CircleMarker>());
   const centroLatLng = useMemo(() => [centro.lat, centro.lon] as [number, number], [centro.lat, centro.lon]);
 
@@ -72,26 +87,34 @@ export default function NapMap({ centro, radio, naps, seleccionada, onSelecciona
   }, [seleccionada]);
 
   return (
-    <MapContainer center={centroLatLng} zoom={16} className="h-full w-full" scrollWheelZoom aria-label="Mapa de NAPs">
+    <MapContainer
+      center={centroLatLng}
+      zoom={16}
+      className={cn("h-full w-full", onMoverPunto && !compacto && "cursor-crosshair")}
+      scrollWheelZoom
+      aria-label="Mapa de NAPs"
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         maxZoom={19}
       />
-      <AjustarVista centro={centro} radio={radio} />
+      <AjustarVista centro={centro} radio={radioVista ?? radio} />
       <EnfocarSeleccion seleccionada={seleccionada} naps={naps} />
       {!compacto ? <ClickParaMover onMoverPunto={onMoverPunto} /> : null}
 
-      {!compacto ? (
+      {!compacto && marcarCentro ? (
         <Circle center={centroLatLng} radius={radio} pathOptions={{ color: "#1d4ed8", weight: 1.5, fillOpacity: 0.06, dashArray: "6 4" }} interactive={false} />
       ) : null}
-      <Marker position={centroLatLng} icon={iconoPunto}>
-        <Popup>
-          Punto buscado
-          <br />
-          {centro.lat.toFixed(6)}, {centro.lon.toFixed(6)}
-        </Popup>
-      </Marker>
+      {marcarCentro ? (
+        <Marker position={centroLatLng} icon={iconoPunto}>
+          <Popup>
+            Punto buscado
+            <br />
+            {centro.lat.toFixed(6)}, {centro.lon.toFixed(6)}
+          </Popup>
+        </Marker>
+      ) : null}
 
       {naps.map((n) => {
         const nivel = nivelDisponibilidad(n);

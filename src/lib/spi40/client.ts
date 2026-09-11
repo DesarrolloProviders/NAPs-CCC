@@ -19,7 +19,7 @@ export interface OpcionesLlamada {
   timeoutMs?: number;
   /** Reintentos solo ante timeout / error de red (GET idempotente). */
   reintentos?: number;
-  /** false para lecturas que deben ser frescas (por ejemplo antes de reservar). */
+  /** false para lecturas que deben ser frescas (saltea la caché de corta duración). */
   usarCache?: boolean;
 }
 

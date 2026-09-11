@@ -17,11 +17,9 @@
     "db:migrate": "tsx -C react-server src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "seed:admin": "tsx -C react-server scripts/seed-admin.ts",
-    "import:reservas": "tsx -C react-server scripts/import-reservas.ts",
     "probe:gis": "tsx -C react-server scripts/probe-gis.ts",
     "probe:spi40": "tsx -C react-server scripts/probe-spi40.ts",
-    "probe:olt": "tsx -C react-server scripts/probe-olt.ts",
-    "vencer:reservas": "tsx -C react-server scripts/vencer-reservas.ts"
+    "probe:olt": "tsx -C react-server scripts/probe-olt.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { ZodError } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { BuscarForm } from "@/features/naps/BuscarForm";
-import { BuscarResultados } from "@/features/naps/BuscarResultados";
+import { BuscarPanel } from "@/features/naps/BuscarPanel";
 import { buscarNaps, limitesBusqueda, listarLocalidades } from "@/features/naps/queries";
 import { parsearBusqueda, type BusquedaParams } from "@/features/naps/search-params";
 import { loggerDe } from "@/lib/logger";
@@ -39,11 +38,11 @@ export default async function BuscarPage({ searchParams }: PageProps<"/buscar">)
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold">Buscar NAPs</h1>
-          <p className="text-sm text-muted-foreground">Ingresá coordenadas y un radio para ver las NAPs cercanas, ordenadas por distancia.</p>
+          <p className="text-sm text-muted-foreground">
+            Ingresá una dirección o coordenadas, o hacé click en el mapa, para ver las NAPs cercanas ordenadas por distancia.
+          </p>
         </div>
       </div>
-
-      <BuscarForm inicial={params} localidades={localidades} radioMax={limites.radioMax} radioDefault={limites.radioDefault} />
 
       {errorParams ? (
         <Alert variant="destructive">
@@ -58,13 +57,16 @@ export default async function BuscarPage({ searchParams }: PageProps<"/buscar">)
         </Alert>
       ) : null}
 
-      {params && resultado ? (
-        <BuscarResultados params={params} naps={resultado.naps} truncado={resultado.truncado} limite={resultado.limite} />
-      ) : !params && !errorParams ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Pegá coordenadas (por ejemplo desde Google Maps) y presioná Buscar. También podés hacer click en el mapa una vez que haya resultados.
-        </div>
-      ) : null}
+      <BuscarPanel
+        inicial={params}
+        hayResultado={resultado !== null}
+        localidades={localidades}
+        radioMax={limites.radioMax}
+        radioDefault={limites.radioDefault}
+        naps={resultado?.naps ?? []}
+        truncado={resultado?.truncado ?? false}
+        limite={resultado?.limite ?? limites.maxResultados}
+      />
     </div>
   );
 }

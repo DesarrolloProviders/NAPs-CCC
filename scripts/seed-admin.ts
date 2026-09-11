@@ -1,6 +1,5 @@
 /**
  * Crea (o actualiza la contraseña de) el administrador inicial a partir de ADMIN_SEED_EMAIL / ADMIN_SEED_PASSWORD.
- * También crea el usuario de sistema "importacion@legacy" (deshabilitado, sin login) usado como actor de las importaciones.
  * Idempotente: se puede correr las veces que haga falta.
  *   npm run seed:admin
  */
@@ -11,8 +10,6 @@ import { db, appSql } from "@/db/client";
 import { account, user } from "@/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { env } from "@/lib/env";
-
-export const EMAIL_SISTEMA_IMPORTACION = "importacion@legacy";
 
 async function upsertUsuario(opts: { email: string; nombre: string; rol: string; password?: string; banned?: boolean }): Promise<string> {
   const ahora = new Date();
@@ -67,7 +64,6 @@ async function upsertUsuario(opts: { email: string; nombre: string; rol: string;
 
 async function main() {
   await upsertUsuario({ email: env.ADMIN_SEED_EMAIL, nombre: "Administrador", rol: "admin", password: env.ADMIN_SEED_PASSWORD });
-  await upsertUsuario({ email: EMAIL_SISTEMA_IMPORTACION, nombre: "Importación legacy (sistema)", rol: "ventas", banned: true });
   await appSql.end({ timeout: 2 });
 }
 

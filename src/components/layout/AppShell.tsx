@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { MapPinned } from "lucide-react";
 import { NavLinks } from "@/components/layout/NavLinks";
 import { UserMenu } from "@/components/layout/UserMenu";
 import type { Actor } from "@/lib/auth/session";
@@ -15,8 +15,7 @@ export function AppShell({ actor, children }: { actor: Actor; children: React.Re
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
         <div className="mx-auto flex h-14 w-full max-w-screen-2xl items-center gap-4 px-4">
           <Link href="/buscar" className="flex items-center gap-2 font-semibold">
-            <MapPinned className="size-5 text-primary" aria-hidden />
-            <span>NAPs CCC</span>
+            <Image src="/logoBlue.png" alt="CCC" width={218} height={80} priority className="h-7 w-auto" />
           </Link>
           <NavLinks links={links} />
           <div className="ml-auto">

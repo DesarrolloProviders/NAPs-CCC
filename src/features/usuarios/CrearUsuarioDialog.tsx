@@ -18,11 +18,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { crearUsuario } from "@/features/usuarios/actions";
 import { crearUsuarioSchema } from "@/features/usuarios/schemas";
-import { ETIQUETA_ROL, ROLES, type Rol } from "@/lib/auth/permissions";
+import { ETIQUETA_ROL, ROLES, ROL_DEFAULT, type Rol } from "@/lib/auth/permissions";
 
 export function CrearUsuarioDialog() {
   const [abierto, setAbierto] = useState(false);
-  const [rol, setRol] = useState<Rol>("ventas");
+  const [rol, setRol] = useState<Rol>(ROL_DEFAULT);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [pendiente, startTransition] = useTransition();
 

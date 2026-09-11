@@ -22,7 +22,7 @@ export const logger: Logger = pino({
     : {}),
 });
 
-export type Servicio = "spi40" | "olt" | "gis" | "reservas" | "auth" | "http" | "usuarios";
+export type Servicio = "spi40" | "olt" | "gis" | "auth" | "http" | "usuarios";
 
 export function loggerDe(svc: Servicio): Logger {
   return logger.child({ svc });

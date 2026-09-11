@@ -2,23 +2,21 @@ import { z } from "zod";
 
 /**
  * Roles y matriz de permisos. Se usa en el servidor (autoridad) y en la UI (solo para ocultar botones).
- * Regla heredada del legacy: ventas reserva; técnica instala y libera; admin todo.
+ * La app es de solo consulta: todos ven las NAPs y sus puertos; el admin además gestiona usuarios.
  */
-export const ROLES = ["admin", "tecnico", "ventas"] as const;
+export const ROLES = ["admin", "usuario"] as const;
 export const rolSchema = z.enum(ROLES);
 export type Rol = z.infer<typeof rolSchema>;
 
+export const ROL_DEFAULT: Rol = "usuario";
+
 export const ETIQUETA_ROL: Record<Rol, string> = {
   admin: "Administrador",
-  tecnico: "Técnico",
-  ventas: "Ventas",
+  usuario: "Usuario",
 };
 
 export const ACCIONES = {
-  ver: ["admin", "tecnico", "ventas"],
-  reservar: ["admin", "ventas"],
-  liberar: ["admin", "tecnico"],
-  instalar: ["admin", "tecnico"],
+  ver: ["admin", "usuario"],
   usuarios: ["admin"],
 } as const satisfies Record<string, readonly Rol[]>;
 

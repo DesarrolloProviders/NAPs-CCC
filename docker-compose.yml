@@ -1,5 +1,5 @@
 # Infraestructura de desarrollo de naps-ccc-nextjs.
-#   app-db : PostgreSQL 16 propio del proyecto (usuarios, reservas, auditoría). Host: localhost:5440
+#   app-db : PostgreSQL 16 propio del proyecto (usuarios y sesiones). Host: localhost:5440
 #   El PostGIS de NAPs (solo lectura) es el de ../legacy-php (contenedor nap-postgis), expuesto en localhost:5441.
 #   app    : imagen de producción (profile "prod"); se une a la red de legacy-php para llegar a 192.168.100.212.
 services:

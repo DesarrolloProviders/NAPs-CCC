@@ -17,7 +17,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">NAPs CCC</CardTitle>
-          <CardDescription>Ingresá con tu usuario para buscar y gestionar NAPs.</CardDescription>
+          <CardDescription>Ingresá con tu usuario para consultar las NAPs y su disponibilidad.</CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm next={destino} />

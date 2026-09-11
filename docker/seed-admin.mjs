@@ -1,4 +1,4 @@
-// Crea (o actualiza la contraseña de) el admin inicial y el usuario de sistema de importación. Idempotente.
+// Crea (o actualiza la contraseña de) el admin inicial. Idempotente.
 // Hash de contraseña compatible con better-auth (proveedor "credential"): scrypt N=16384 r=16 p=1 dkLen=64, "salt:hex".
 // Se usa node:crypto directamente para no depender de better-auth dentro del standalone.
 import { randomBytes, randomUUID, scrypt } from "node:crypto";
@@ -48,7 +48,6 @@ async function upsert({ email, nombre, rol, password, banned }) {
 
 try {
   await upsert({ email, nombre: "Administrador", rol: "admin", password, banned: false });
-  await upsert({ email: "importacion@legacy", nombre: "Importación legacy (sistema)", rol: "ventas", password: null, banned: true });
 } finally {
   await sql.end({ timeout: 2 });
 }

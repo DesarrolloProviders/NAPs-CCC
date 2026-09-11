@@ -21,8 +21,7 @@ ENV APP_DATABASE_URL=postgres://build:build@localhost:5432/build \
     BETTER_AUTH_SECRET=build-secret-build-secret-build-secret-00 \
     BETTER_AUTH_URL=http://localhost:3110 \
     ADMIN_SEED_EMAIL=build@example.com \
-    ADMIN_SEED_PASSWORD=build-password \
-    CRON_SECRET=build-secret
+    ADMIN_SEED_PASSWORD=build-password
 RUN npm run build
 
 FROM node:24-alpine AS runtime

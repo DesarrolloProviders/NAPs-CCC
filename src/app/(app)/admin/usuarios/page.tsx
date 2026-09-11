@@ -19,7 +19,7 @@ export default async function UsuariosPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Usuarios</h1>
-          <p className="text-sm text-muted-foreground">Altas, roles y acceso. Ventas reserva; Técnico instala y libera; Administrador todo.</p>
+          <p className="text-sm text-muted-foreground">Altas, roles y acceso. Usuario consulta NAPs y puertos; Administrador además gestiona usuarios.</p>
         </div>
         <CrearUsuarioDialog />
       </div>

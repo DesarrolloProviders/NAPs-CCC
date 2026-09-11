@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { auth, type Session } from "@/lib/auth/auth";
-import { PermisoDenegadoError, puede, type Accion, type Rol } from "@/lib/auth/permissions";
+import { PermisoDenegadoError, puede, ROL_DEFAULT, type Accion, type Rol } from "@/lib/auth/permissions";
 
 export interface Actor {
   id: string;
@@ -19,7 +19,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
 });
 
 export function actorDe(session: Session): Actor {
-  const rol = (session.user.role ?? "ventas") as Rol;
+  const rol = (session.user.role ?? ROL_DEFAULT) as Rol;
   return { id: session.user.id, nombre: session.user.name, email: session.user.email, rol };
 }
 

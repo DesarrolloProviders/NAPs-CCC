@@ -75,3 +75,6 @@ export function estaEnTucuman(c: Coordenadas): boolean {
 export function formatoCoordenadas(c: Coordenadas): string {
   return `${c.lat.toFixed(6)}, ${c.lon.toFixed(6)}`;
 }
+
+/** Centro por defecto del mapa cuando todavía no hay búsqueda (San Miguel de Tucumán). */
+export const CENTRO_DEFAULT: Coordenadas = { lat: -26.8241, lon: -65.2226 };

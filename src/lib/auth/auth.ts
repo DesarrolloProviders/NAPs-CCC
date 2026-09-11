@@ -36,8 +36,9 @@ export const auth = betterAuth({
     cookiePrefix: "naps",
     useSecureCookies: env.NODE_ENV === "production",
   },
-  rateLimit: { enabled: true, window: 60, max: 30 },
-  plugins: [admin({ ac, roles: rolesAuth, defaultRole: "ventas", adminRoles: ["admin"] }), nextCookies()],
+  // Igual que el default de better-auth: solo en producción (en dev y e2e hay muchos logins seguidos).
+  rateLimit: { enabled: env.NODE_ENV === "production", window: 60, max: 30 },
+  plugins: [admin({ ac, roles: rolesAuth, defaultRole: "usuario", adminRoles: ["admin"] }), nextCookies()],
 });
 
 export type Auth = typeof auth;

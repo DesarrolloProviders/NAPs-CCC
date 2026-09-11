@@ -23,8 +23,8 @@ test.describe("autenticación", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("ventas no ve Usuarios y recibe 404 en /admin/usuarios", async ({ page }) => {
-    await login(page, USUARIOS.ventas);
+  test("un usuario común no ve Usuarios y recibe 404 en /admin/usuarios", async ({ page }) => {
+    await login(page, USUARIOS.usuario);
     await expect(page.getByRole("link", { name: "Usuarios" })).toHaveCount(0);
     const r = await page.goto("/admin/usuarios");
     expect(r?.status()).toBe(404);

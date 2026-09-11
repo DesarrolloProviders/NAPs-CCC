@@ -1,9 +1,9 @@
 import { expect, type Page } from "@playwright/test";
 
-/** Credenciales de desarrollo (seed-admin y usuario de prueba creado en la Fase 3). */
+/** Credenciales de desarrollo: el admin del seed y una cuenta de rol "usuario" (en dev, ventas@ccc.local). */
 export const USUARIOS = {
   admin: { email: process.env.E2E_ADMIN_EMAIL ?? "admin@ccc.local", password: process.env.E2E_ADMIN_PASSWORD ?? "Admin.naps.2026" },
-  ventas: { email: process.env.E2E_VENTAS_EMAIL ?? "ventas@ccc.local", password: process.env.E2E_VENTAS_PASSWORD ?? "Ventas.naps.2026" },
+  usuario: { email: process.env.E2E_USUARIO_EMAIL ?? "ventas@ccc.local", password: process.env.E2E_USUARIO_PASSWORD ?? "Ventas.naps.2026" },
 } as const;
 
 export const NAP_PRUEBA = "303-01-08-N08-1-E";

@@ -9,15 +9,10 @@ import { EstadoOnlineCell } from "@/features/puertos/EstadoOnlineCell";
 import { ETIQUETA_ESTADO, type EstadoPuerto } from "@/features/puertos/estado-puerto";
 import type { PuertoVista } from "@/features/puertos/fusionar-puertos";
 import { useOltStatus } from "@/features/puertos/use-olt-status";
-import { PuertoAcciones } from "@/features/reservas/PuertoAcciones";
-import type { Rol } from "@/lib/auth/permissions";
-import { formatoCorto } from "@/lib/fechas";
 import { cn } from "@/lib/utils";
 
 const CLASE_ESTADO: Record<EstadoPuerto, string> = {
   libre: "border-green-200 bg-green-100 text-green-800",
-  reservado: "border-blue-200 bg-blue-100 text-blue-800",
-  instalado: "border-violet-200 bg-violet-100 text-violet-800",
   ocupado: "border-amber-200 bg-amber-100 text-amber-800",
   online: "border-green-200 bg-green-100 text-green-800",
 };
@@ -25,13 +20,9 @@ const CLASE_ESTADO: Record<EstadoPuerto, string> = {
 interface Props {
   idNap: string;
   puertos: PuertoVista[];
-  /** Rol del usuario: define qué acciones se muestran por puerto (la autorización real es del servidor). */
-  rol: Rol;
-  diasDefault: number;
-  diasMax: number;
 }
 
-export function PuertosTabla({ idNap, puertos, rol, diasDefault, diasMax }: Props) {
+export function PuertosTabla({ idNap, puertos }: Props) {
   const hayOnts = puertos.some((p) => p.macOnt);
   const olt = useOltStatus(idNap, hayOnts);
   const qc = useQueryClient();
@@ -69,7 +60,6 @@ export function PuertosTabla({ idNap, puertos, rol, diasDefault, diasMax }: Prop
             <TableHead>Cliente</TableHead>
             <TableHead>ONT</TableHead>
             <TableHead>OLT</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -80,17 +70,9 @@ export function PuertosTabla({ idNap, puertos, rol, diasDefault, diasMax }: Prop
               <TableRow key={p.idNodo} data-testid={`puerto-${p.puerto}`} data-estado={estadoFinal}>
                 <TableCell className="font-medium tabular-nums">{p.puerto}</TableCell>
                 <TableCell>
-                  <div className="flex flex-col gap-0.5">
-                    <Badge variant="outline" className={cn("w-fit text-[11px]", CLASE_ESTADO[estadoFinal])}>
-                      {ETIQUETA_ESTADO[estadoFinal]}
-                    </Badge>
-                    {p.reserva ? (
-                      <span className="text-xs text-muted-foreground">
-                        hasta {formatoCorto(p.reserva.venceEn)}
-                        {p.reserva.creadaPor ? ` por ${p.reserva.creadaPor.nombre}` : ""} · {p.reserva.observacion}
-                      </span>
-                    ) : null}
-                  </div>
+                  <Badge variant="outline" className={cn("w-fit text-[11px]", CLASE_ESTADO[estadoFinal])}>
+                    {ETIQUETA_ESTADO[estadoFinal]}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   {p.cliente ? (
@@ -114,9 +96,6 @@ export function PuertosTabla({ idNap, puertos, rol, diasDefault, diasMax }: Prop
                 </TableCell>
                 <TableCell>
                   <EstadoOnlineCell mac={p.macOnt} estado={estadoOlt} cargando={olt.isPending} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <PuertoAcciones idNap={idNap} puerto={p} rol={rol} diasDefault={diasDefault} diasMax={diasMax} />
                 </TableCell>
               </TableRow>
             );

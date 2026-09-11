@@ -12,7 +12,6 @@ import { aQueryString } from "@/features/naps/search-params";
 import { obtenerPuertosConEstado } from "@/features/puertos/fusionar-puertos";
 import { PuertosTabla } from "@/features/puertos/PuertosTabla";
 import { getActorOrRedirect } from "@/lib/auth/session";
-import { env } from "@/lib/env";
 import { formatoCoordenadas } from "@/lib/geo/parse-coordenadas";
 import { obtenerNapPorCodigo } from "@/lib/gis/queries";
 import { esIdNapValido } from "@/lib/nap/normalizar-id-nap";
@@ -26,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/naps/[idNap]">): 
 }
 
 export default async function NapDetallePage({ params }: PageProps<"/naps/[idNap]">) {
-  const actor = await getActorOrRedirect();
+  await getActorOrRedirect();
   const { idNap } = await params;
   const codigo = decodeURIComponent(idNap);
   if (!esIdNapValido(codigo)) notFound();
@@ -89,7 +88,7 @@ export default async function NapDetallePage({ params }: PageProps<"/naps/[idNap
               ) : resultado.puertos.length === 0 ? (
                 <p className="text-sm text-muted-foreground">El sistema de abonados no devolvió puertos para esta NAP.</p>
               ) : (
-                <PuertosTabla idNap={nap.idNap} puertos={resultado.puertos} rol={actor.rol} diasDefault={env.RESERVA_DIAS_DEFAULT} diasMax={env.RESERVA_DIAS_MAX} />
+                <PuertosTabla idNap={nap.idNap} puertos={resultado.puertos} />
               )}
             </CardContent>
           </Card>

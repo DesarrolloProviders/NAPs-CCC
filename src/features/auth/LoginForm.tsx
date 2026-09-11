@@ -38,7 +38,9 @@ export function LoginForm({ next }: { next?: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4" noValidate>
+    // method="post" es la red de seguridad: si el usuario envía el formulario antes de que
+    // hidrate el JS, el navegador hace un POST y no filtra la contraseña en la query string.
+    <form onSubmit={onSubmit} method="post" action="/login" className="space-y-4" noValidate>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" autoComplete="username" required autoFocus placeholder="usuario@ccc.com" />

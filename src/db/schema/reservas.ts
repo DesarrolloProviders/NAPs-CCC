@@ -17,11 +17,12 @@ import {
 import { user } from "./auth";
 
 /**
- * Reservas de puertos de NAP. Reemplaza a MySQL cccgo.reservas del legacy (una fila por puerto, sin historial).
+ * ARCHIVO HISTÓRICO — la app ya no maneja reservas ni instalaciones (eso pasó a otro sistema).
  *
- *  - La clave de negocio es `id_nodo` (id del puerto en spi40).
- *  - Una sola reserva ACTIVA por puerto: índice único parcial (resuelve la carrera y el bug del INSERT del legacy).
- *  - Vigente = estado 'activa' AND vence_en >= hoy. El paso a 'vencida' es histórico (cron); la lectura filtra por fecha.
+ * Estas tablas quedan en la base con los datos que ya tenían (importación del legacy MySQL cccgo.reservas
+ * y lo que se haya cargado antes del cambio). Ningún código de la app las lee ni las escribe: se declaran
+ * únicamente para que drizzle-kit NO genere un DROP al comparar el esquema con la base.
+ * Si alguna vez se decide descartar el histórico, borrar este archivo y generar la migración correspondiente.
  */
 export const reservaEstadoEnum = pgEnum("reserva_estado", ["activa", "vencida", "liberada", "instalada"]);
 export const reservaOrigenEnum = pgEnum("reserva_origen", ["app", "legacy_import"]);

@@ -10,7 +10,8 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: { default: "NAPs CCC", template: "%s · NAPs CCC" },
-  description: "Búsqueda y gestión de NAPs de CCC por coordenadas",
+  description: "Búsqueda de NAPs de CCC por coordenadas y disponibilidad de puertos",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

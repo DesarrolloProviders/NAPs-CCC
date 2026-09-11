@@ -31,13 +31,10 @@ const esquema = z.object({
   ADMIN_SEED_EMAIL: z.string().email(),
   ADMIN_SEED_PASSWORD: z.string().min(10),
 
-  RESERVA_DIAS_DEFAULT: numero(10),
-  RESERVA_DIAS_MAX: numero(30),
   BUSQUEDA_RADIO_DEFAULT_M: numero(500),
   BUSQUEDA_RADIO_MAX_M: numero(5000),
   BUSQUEDA_MAX_RESULTADOS: numero(500),
 
-  CRON_SECRET: z.string().min(8),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   TZ: z.string().default("America/Argentina/Tucuman"),
 });
