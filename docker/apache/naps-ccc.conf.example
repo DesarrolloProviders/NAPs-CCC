@@ -1,0 +1,49 @@
+# Vhost de Apache para servir NAPs CCC cuando Apache YA ocupa 80/443 en el host (servidor del legacy, lab-CCC-NAPs).
+# En ese caso compose se levanta con COMPOSE_PROFILES=prod (sin nginx) y Apache reenvía a la app en 127.0.0.1:APP_PORT.
+#
+#   sudo cp docker/apache/naps-ccc.conf.example /etc/apache2/sites-available/naps-ccc.conf
+#   (ajustar ServerName, certificados y el puerto de ProxyPass = APP_PORT de .env)
+#   sudo a2enmod proxy proxy_http headers ssl rewrite      # en lab-CCC-NAPs ya están habilitados
+#   sudo a2ensite naps-ccc && sudo apachectl configtest && sudo systemctl reload apache2
+#
+# Certificado: lo gestiona IT (certbot), misma ruta que los vhosts del legacy.
+
+<VirtualHost *:80>
+    ServerName naps.example.com
+    RewriteEngine on
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
+</VirtualHost>
+
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerName naps.example.com
+
+    SSLEngine on
+    SSLCertificateFile    /etc/letsencrypt/live/naps.example.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/naps.example.com/privkey.pem
+    Include /etc/letsencrypt/options-ssl-apache.conf
+
+    # La app necesita el Host original y saber que la conexión es https (cookies Secure, BETTER_AUTH_URL).
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Host "%{HTTP_HOST}e" env=HTTP_HOST
+    # mod_proxy agrega X-Forwarded-For con la IP real. Se borra antes la que traiga el cliente para que no pueda
+    # falsificarla (el rate limit del login usa la primera IP de esa cabecera).
+    RequestHeader unset X-Forwarded-For early
+
+    # El estado OLT (/api/naps/<id>/olt) puede tardar varios minutos en NAPs con muchas ONTs.
+    ProxyTimeout 300
+
+    # /api/health solo desde la red interna (monitoreo). Apache responde 403 al resto (nginx respondería 404).
+    <Location "/api/health">
+        Require ip 127.0.0.0/8 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+    </Location>
+
+    ProxyPass        / http://127.0.0.1:3110/ retry=0
+    ProxyPassReverse / http://127.0.0.1:3110/
+
+    # HSTS, CSP y el resto de las cabeceras de seguridad las pone la app.
+    ErrorLog  ${APACHE_LOG_DIR}/naps-ccc-error.log
+    CustomLog ${APACHE_LOG_DIR}/naps-ccc-access.log combined
+</VirtualHost>
+</IfModule>

@@ -14,7 +14,12 @@ function crear(): Sql {
     max: 10,
     idle_timeout: 30,
     connect_timeout: 10,
-    connection: { application_name: "naps-ccc-app" },
+    connection: {
+      application_name: "naps-ccc-app",
+      // Ninguna consulta de la app debería tardar más que esto; evita que una sentencia colgada retenga la conexión.
+      statement_timeout: 10_000,
+      idle_in_transaction_session_timeout: 10_000,
+    },
   });
 }
 

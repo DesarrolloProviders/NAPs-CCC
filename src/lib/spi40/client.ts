@@ -2,12 +2,15 @@ import "server-only";
 import type { z } from "zod";
 import { env } from "@/lib/env";
 import { loggerDe } from "@/lib/logger";
+import { leerTextoAcotado } from "@/lib/http/leer-texto-acotado";
 import { CacheTtl } from "@/lib/spi40/cache";
 import { DecodeError, construirUrl, decodificarRespuesta } from "@/lib/spi40/codec";
 import { Spi40Error } from "@/lib/spi40/errors";
 import { envelopeSchema, type Envelope } from "@/lib/spi40/schemas";
 
 const log = loggerDe("spi40");
+/** 22015 sin filtro devuelve todas las NAPs (~cientos de KB). Más que esto es un error del servicio. */
+const MAX_RESPUESTA_BYTES = 10 * 1024 * 1024;
 
 declare global {
   var __spi40Cache: CacheTtl<Envelope> | undefined;
@@ -86,7 +89,13 @@ async function ejecutar(idAction: number, payload: Record<string, unknown>, time
     throw new Spi40Error(esTimeout ? "timeout" : "network", idAction, esTimeout ? `Timeout de ${timeoutMs} ms` : "Error de red", { causa: e });
   }
 
-  const texto = await respuesta.text();
+  let texto: string;
+  try {
+    texto = await leerTextoAcotado(respuesta, MAX_RESPUESTA_BYTES);
+  } catch (e) {
+    log.error({ ...ctx, ms: ms(inicio), error: String(e) }, "respuesta demasiado grande");
+    throw new Spi40Error("decode", idAction, "Respuesta demasiado grande", { causa: e });
+  }
   if (!respuesta.ok) {
     log.warn({ ...ctx, ms: ms(inicio), status: respuesta.status }, "HTTP no OK");
     throw new Spi40Error("http", idAction, `HTTP ${respuesta.status}`);

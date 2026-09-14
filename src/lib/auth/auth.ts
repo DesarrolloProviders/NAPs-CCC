@@ -16,6 +16,7 @@ export const auth = betterAuth({
   appName: "NAPs CCC",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: [env.BETTER_AUTH_URL],
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: { user: schema.user, session: schema.session, account: schema.account, verification: schema.verification },
@@ -23,21 +24,41 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,
-    minPasswordLength: 10,
+    minPasswordLength: 4,
     maxPasswordLength: 128,
     autoSignIn: false,
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 días
     updateAge: 60 * 60 * 24, // renueva una vez por día
-    cookieCache: { enabled: true, maxAge: 60 * 5 },
+    // Corto a propósito: es el tiempo máximo que un usuario dado de baja o degradado conserva el acceso.
+    cookieCache: { enabled: true, maxAge: env.AUTH_COOKIE_CACHE_S },
   },
   advanced: {
     cookiePrefix: "naps",
     useSecureCookies: env.NODE_ENV === "production",
+    // Detrás de nginx: la IP real viene en X-Forwarded-For (nginx la fija a $remote_addr y descarta la que traiga el cliente).
+    // Si se agrega otro salto (Cloudflare, otro proxy), sumar `trustedProxies: ["<ip/cidr del salto>"]`.
+    ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
   },
   // Igual que el default de better-auth: solo en producción (en dev y e2e hay muchos logins seguidos).
-  rateLimit: { enabled: env.NODE_ENV === "production", window: 60, max: 30 },
+  rateLimit: {
+    enabled: env.NODE_ENV === "production",
+    window: 60,
+    max: 30,
+    customRules: { "/sign-in/email": { window: 60, max: 10 } },
+  },
+  // Endpoints del plugin admin y del core que la app no usa. Se apagan para achicar la superficie.
+  disabledPaths: [
+    "/admin/impersonate-user",
+    "/admin/stop-impersonating",
+    "/admin/remove-user",
+    "/admin/set-user-email",
+    "/admin/update-user",
+    "/delete-user",
+    "/change-email",
+    "/update-user",
+  ],
   plugins: [admin({ ac, roles: rolesAuth, defaultRole: "usuario", adminRoles: ["admin"] }), nextCookies()],
 });
 

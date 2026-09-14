@@ -4,14 +4,14 @@ import { rolSchema } from "@/lib/auth/permissions";
 export const crearUsuarioSchema = z.object({
   nombre: z.string().trim().min(2, "Ingresá el nombre").max(100),
   email: z.string().trim().toLowerCase().email("Email inválido"),
-  password: z.string().min(10, "Mínimo 10 caracteres").max(128),
+  password: z.string().min(4, "Mínimo 4 caracteres").max(128),
   rol: rolSchema,
 });
 export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;
 
 export const cambiarRolSchema = z.object({ userId: z.string().min(1), rol: rolSchema });
 export const activarUsuarioSchema = z.object({ userId: z.string().min(1), activo: z.boolean() });
-export const resetearPasswordSchema = z.object({ userId: z.string().min(1), password: z.string().min(10, "Mínimo 10 caracteres").max(128) });
+export const resetearPasswordSchema = z.object({ userId: z.string().min(1), password: z.string().min(4, "Mínimo 4 caracteres").max(128) });
 
 export interface UsuarioVista {
   id: string;

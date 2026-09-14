@@ -2,13 +2,14 @@
 
 import { RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EstadoOnlineCell } from "@/features/puertos/EstadoOnlineCell";
 import { ETIQUETA_ESTADO, type EstadoPuerto } from "@/features/puertos/estado-puerto";
 import type { PuertoVista } from "@/features/puertos/fusionar-puertos";
-import { useOltStatus } from "@/features/puertos/use-olt-status";
+import { fetchEstadoOlt, useOltStatus } from "@/features/puertos/use-olt-status";
 import { cn } from "@/lib/utils";
 
 const CLASE_ESTADO: Record<EstadoPuerto, string> = {
@@ -44,7 +45,14 @@ export function PuertosTabla({ idNap, puertos }: Props) {
             variant="ghost"
             size="sm"
             disabled={olt.isFetching}
-            onClick={() => qc.fetchQuery({ queryKey: ["olt", idNap], queryFn: () => fetch(`/api/naps/${encodeURIComponent(idNap)}/olt?refresh=1`).then((r) => r.json()) })}
+            onClick={() =>
+              qc
+                .fetchQuery({ queryKey: ["olt", idNap], queryFn: ({ signal }) => fetchEstadoOlt(idNap, { refresh: true, signal }), staleTime: 0 })
+                .then((r) => {
+                  if (r.throttled) toast.info("El estado OLT de esta NAP se actualizó hace menos de un minuto; se muestra el último consultado.");
+                })
+                .catch((e: unknown) => toast.error(e instanceof Error ? e.message : "No se pudo consultar la OLT"))
+            }
             title="Volver a consultar la OLT"
           >
             <RefreshCw className={cn("size-4", olt.isFetching && "animate-spin")} aria-hidden />
@@ -64,7 +72,7 @@ export function PuertosTabla({ idNap, puertos }: Props) {
         </TableHeader>
         <TableBody>
           {puertos.map((p) => {
-            const estadoOlt = p.macOnt ? olt.data?.estados[p.macOnt] : undefined;
+            const estadoOlt = p.macOnt ? olt.data?.estados?.[p.macOnt] : undefined;
             const estadoFinal: EstadoPuerto = p.estado === "ocupado" && estadoOlt?.online === true ? "online" : p.estado;
             return (
               <TableRow key={p.idNodo} data-testid={`puerto-${p.puerto}`} data-estado={estadoFinal}>

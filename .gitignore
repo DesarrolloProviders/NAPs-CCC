@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files: los .example SÍ se versionan (sin credenciales reales)
+.env
+.env.*.local
 
 # vercel
 .vercel
@@ -43,6 +44,12 @@ next-env.d.ts
 # naps-ccc-nextjs
 .env.local
 .env.docker
+.env.db
+/backups
 /playwright-report
 /test-results
 /tests/e2e/.auth
+# nginx: certificados de prueba y desafíos ACME (nunca se versionan)
+/docker/nginx/certs
+/docker/nginx/acme/*
+!/docker/nginx/acme/.gitkeep

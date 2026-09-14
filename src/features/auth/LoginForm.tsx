@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth/auth-client";
+import { destinoSeguro } from "@/lib/auth/destino-seguro";
 
 export function LoginForm({ next }: { next?: string }) {
   const router = useRouter();
@@ -33,7 +34,7 @@ export function LoginForm({ next }: { next?: string }) {
       return;
     }
     toast.success("Sesión iniciada");
-    router.replace((next && next.startsWith("/") ? next : "/buscar") as "/buscar");
+    router.replace(destinoSeguro(next) as "/buscar");
     router.refresh();
   }
 
@@ -47,7 +48,7 @@ export function LoginForm({ next }: { next?: string }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Contraseña</Label>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required minLength={10} />
+        <Input id="password" name="password" type="password" autoComplete="current-password" required minLength={4} />
       </div>
       {error ? (
         <p role="alert" className="text-sm text-destructive">

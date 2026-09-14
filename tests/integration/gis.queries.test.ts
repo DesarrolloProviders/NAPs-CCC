@@ -2,11 +2,11 @@ import { afterAll, describe, expect, it } from "vitest";
 import { gisSql } from "@/lib/gis/client";
 import { buscarNaps, listarLocalidades, obtenerNapPorCodigo, pingGis } from "@/lib/gis/queries";
 
-// Punto y NAP de referencia validados contra el PostGIS local (dump del 2026-09-09).
+// Punto y NAP de referencia del servidor GIS (validados el 2026-09-09; si cambia la red real, actualizar las cantidades).
 const PUNTO = { lat: -26.8419, lon: -65.1622 };
 const NAP_PRUEBA = "303-01-08-N08-1-E";
 
-describe("capa GIS (PostGIS local, solo lectura)", () => {
+describe("capa GIS (PostGIS real, solo lectura)", () => {
   afterAll(async () => {
     await gisSql.end({ timeout: 2 });
   });

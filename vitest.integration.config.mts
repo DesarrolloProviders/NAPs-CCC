@@ -1,8 +1,8 @@
 import path from "node:path";
 import { defineConfig } from "vitest/config";
 
-// Tests de integración: usan el PostGIS local (GIS_DATABASE_URL) y la base de test (APP_DATABASE_URL_TEST).
-// Requieren `docker compose up -d app-db` acá y `docker compose up -d postgis` en ../legacy-php.
+// Tests de integración: consultan el PostGIS real (GIS_DATABASE_URL de .env.local), solo lectura.
+// Requieren acceso de red al servidor GIS. No tocan la base propia.
 export default defineConfig({
   resolve: {
     alias: {

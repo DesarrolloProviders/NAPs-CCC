@@ -1,0 +1,107 @@
+# Reverse proxy con TLS delante de la app (servicio `nginx` de compose.yml).
+#
+# La imagen oficial de nginx renderiza este template con envsubst al arrancar (/etc/nginx/templates → /etc/nginx/conf.d).
+# Solo se sustituye ${PUBLIC_HOST} (NGINX_ENVSUBST_FILTER en compose.yml); el resto de los `$variable` son de nginx.
+#
+# Certificados: /etc/letsencrypt/live/${PUBLIC_HOST}/{fullchain,privkey}.pem, montados de solo lectura desde el host
+# (certbot en el host, igual que el sistema legacy). Para la LAN sin DNS: certificado autofirmado con la misma
+# estructura de carpetas y TLS_DIR en .env (ver README).
+
+# Access log en JSON a stdout (lo rota Docker). Sin query string: /buscar?lat&lon son coordenadas de clientes.
+log_format naps_json escape=json
+  '{"ts":"$time_iso8601","reqId":"$request_id","ip":"$remote_addr","method":"$request_method","host":"$host",'
+  '"path":"$uri","status":$status,"bytes":$body_bytes_sent,"ms":$request_time,"upstream_ms":"$upstream_response_time",'
+  '"ua":"$http_user_agent"}';
+access_log /var/log/nginx/access.log naps_json;
+
+# A nivel http (este archivo se incluye ahí): ALPN se negocia en el socket, así que http2 debe estar activo también para
+# el default_server de :443, no solo en el vhost.
+http2 on;
+
+# El nombre `app` se resuelve por el DNS interno de Docker en cada request (con `valid`), así un reinicio de `app`
+# con otra IP no deja a nginx apuntando a la vieja hasta que se lo recargue.
+resolver 127.0.0.11 valid=10s ipv6=off;
+
+# Solo redes privadas (monitoreo interno) pueden consultar /api/health; desde internet la ruta no existe (404).
+geo $desde_lan {
+  default 0;
+  10.0.0.0/8 1;
+  172.16.0.0/12 1;
+  192.168.0.0/16 1;
+  127.0.0.0/8 1;
+}
+
+# Cualquier otro nombre de host o acceso por IP: sin handshake TLS / sin respuesta.
+server {
+  listen 443 ssl default_server;
+  server_name _;
+  ssl_reject_handshake on;
+}
+server {
+  listen 80 default_server;
+  server_name _;
+  return 444;
+}
+
+# HTTP: solo el desafío ACME de certbot (renovaciones por webroot) y redirección a HTTPS.
+server {
+  listen 80;
+  server_name ${PUBLIC_HOST};
+  server_tokens off;
+
+  location ^~ /.well-known/acme-challenge/ {
+    root /var/www/acme;
+    default_type text/plain;
+  }
+  location / {
+    return 301 https://${PUBLIC_HOST}$request_uri;
+  }
+}
+
+server {
+  listen 443 ssl;
+  server_name ${PUBLIC_HOST};
+  server_tokens off;
+
+  ssl_certificate     /etc/letsencrypt/live/${PUBLIC_HOST}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/${PUBLIC_HOST}/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
+  ssl_prefer_server_ciphers off;
+  ssl_session_cache shared:naps_ssl:10m;
+  ssl_session_timeout 1d;
+  ssl_session_tickets off;
+  # HSTS, CSP y el resto de las cabeceras de seguridad las pone la app (next.config.ts).
+
+  gzip on;
+  gzip_vary on;
+  gzip_min_length 1024;
+  gzip_types text/plain text/css application/json application/javascript application/xml image/svg+xml;
+
+  client_max_body_size 1m;
+  # El estado OLT (/api/naps/<id>/olt) puede tardar varios minutos en NAPs con muchas ONTs.
+  proxy_read_timeout 300s;
+  proxy_send_timeout 60s;
+  proxy_connect_timeout 5s;
+  proxy_http_version 1.1;
+  proxy_buffering off;
+  proxy_set_header Host $host;
+  # Solo la IP de la conexión: better-auth toma la primera de X-Forwarded-For para el rate limit y no hay que
+  # dejar que el cliente la falsifique agregando la suya.
+  proxy_set_header X-Forwarded-For $remote_addr;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-Host $host;
+  # Correlación con los logs JSON de la app (src/proxy.ts lo reusa como reqId).
+  proxy_set_header X-Request-Id $request_id;
+
+  set $app http://app:3000;
+
+  location ~ ^/api/health(/|$) {
+    if ($desde_lan = 0) { return 404; }
+    proxy_pass $app;
+  }
+
+  location / {
+    proxy_pass $app;
+  }
+}

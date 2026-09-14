@@ -1,13 +1,13 @@
 "use server";
 
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { ZodError } from "zod";
 import { db } from "@/db/client";
-import { user } from "@/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { PermisoDenegadoError } from "@/lib/auth/permissions";
 import { requireRole } from "@/lib/auth/session";
+import { registrarAuditoria } from "@/lib/auditoria";
 import { loggerDe } from "@/lib/logger";
 import {
   activarUsuarioSchema,
@@ -17,6 +17,11 @@ import {
   type ResultadoAccion,
   type UsuarioVista,
 } from "@/features/usuarios/schemas";
+
+/*
+ * Todas las funciones exportadas de este archivo son endpoints HTTP (Server Actions):
+ * la primera línea de cada una debe ser `requireRole(...)`.
+ */
 
 const log = loggerDe("usuarios");
 
@@ -29,12 +34,19 @@ export async function listarUsuarios(): Promise<UsuarioVista[]> {
     .map((u) => ({ id: u.id, nombre: u.name, email: u.email, rol: u.role, activo: !u.banned, creadoEn: u.createdAt.toISOString() }));
 }
 
+/** Traduce errores a mensajes seguros para la UI; el detalle va solo al log. */
 function manejar(e: unknown, contexto: string): ResultadoAccion<never> {
   if (e instanceof PermisoDenegadoError) return { ok: false, error: "No tenés permiso para esta acción." };
+  if (e instanceof ZodError) return { ok: false, error: "Los datos ingresados no son válidos." };
   const mensaje = e instanceof Error ? e.message : String(e);
-  log.error({ contexto, error: mensaje }, "acción de usuarios falló");
+  log.error({ contexto, err: e }, "acción de usuarios falló");
   if (/already exists|ya existe|unique/i.test(mensaje)) return { ok: false, error: "Ya existe un usuario con ese email." };
-  return { ok: false, error: mensaje || "Error inesperado." };
+  return { ok: false, error: "Error inesperado. Si persiste, avisá a sistemas." };
+}
+
+/** Cierra todas las sesiones abiertas de otro usuario (tras cambiar su rol o su contraseña). */
+async function revocarSesionesDe(userId: string) {
+  await auth.api.revokeUserSessions({ headers: await headers(), body: { userId } });
 }
 
 export async function crearUsuario(input: unknown): Promise<ResultadoAccion<{ id: string }>> {
@@ -45,7 +57,8 @@ export async function crearUsuario(input: unknown): Promise<ResultadoAccion<{ id
       headers: await headers(),
       body: { email: datos.email, password: datos.password, name: datos.nombre, role: datos.rol },
     });
-    log.info({ actor: actor.email, nuevo: datos.email, rol: datos.rol }, "usuario creado");
+    log.info({ actorId: actor.id, userId: creado.user.id, rol: datos.rol }, "usuario creado");
+    await registrarAuditoria({ actorId: actor.id, accion: "usuario.crear", objetivoId: creado.user.id, datos: { email: datos.email, rol: datos.rol } });
     revalidatePath("/admin/usuarios");
     return { ok: true, data: { id: creado.user.id } };
   } catch (e) {
@@ -59,7 +72,10 @@ export async function cambiarRol(input: unknown): Promise<ResultadoAccion> {
     const { userId, rol } = cambiarRolSchema.parse(input);
     if (userId === actor.id && rol !== "admin") return { ok: false, error: "No podés quitarte el rol de administrador a vos mismo." };
     await auth.api.setRole({ headers: await headers(), body: { userId, role: rol } });
-    log.info({ actor: actor.email, userId, rol }, "rol cambiado");
+    // El rol viaja en la cookie de sesión: sin esto el cambio tardaría hasta AUTH_COOKIE_CACHE_S en verse.
+    if (userId !== actor.id) await revocarSesionesDe(userId);
+    log.info({ actorId: actor.id, userId, rol }, "rol cambiado");
+    await registrarAuditoria({ actorId: actor.id, accion: "usuario.rol", objetivoId: userId, datos: { rol } });
     revalidatePath("/admin/usuarios");
     return { ok: true };
   } catch (e) {
@@ -75,9 +91,11 @@ export async function activarUsuario(input: unknown): Promise<ResultadoAccion> {
     if (activo) {
       await auth.api.unbanUser({ headers: await headers(), body: { userId } });
     } else {
+      // banUser ya borra las sesiones del usuario.
       await auth.api.banUser({ headers: await headers(), body: { userId, banReason: `Desactivado por ${actor.email}` } });
     }
-    log.info({ actor: actor.email, userId, activo }, "usuario activado/desactivado");
+    log.info({ actorId: actor.id, userId, activo }, "usuario activado/desactivado");
+    await registrarAuditoria({ actorId: actor.id, accion: activo ? "usuario.activar" : "usuario.desactivar", objetivoId: userId });
     revalidatePath("/admin/usuarios");
     return { ok: true };
   } catch (e) {
@@ -90,15 +108,12 @@ export async function resetearPassword(input: unknown): Promise<ResultadoAccion>
     const actor = await requireRole("usuarios");
     const { userId, password } = resetearPasswordSchema.parse(input);
     await auth.api.setUserPassword({ headers: await headers(), body: { userId, newPassword: password } });
-    log.info({ actor: actor.email, userId }, "contraseña reseteada");
+    // Si la cuenta estaba comprometida, quien la usaba no debe seguir adentro.
+    if (userId !== actor.id) await revocarSesionesDe(userId);
+    log.info({ actorId: actor.id, userId }, "contraseña reseteada");
+    await registrarAuditoria({ actorId: actor.id, accion: "usuario.reset_password", objetivoId: userId });
     return { ok: true };
   } catch (e) {
     return manejar(e, "resetearPassword");
   }
-}
-
-/** Solo para verificación: nombre de un usuario por id (usado en historiales). */
-export async function nombreDeUsuario(id: string): Promise<string | null> {
-  const u = await db.query.user.findFirst({ where: eq(user.id, id), columns: { name: true } });
-  return u?.name ?? null;
 }

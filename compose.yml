@@ -1,0 +1,102 @@
+# Infraestructura de naps-ccc-nextjs. Este archivo es la base de PRODUCCIÓN; compose.override.yml (se carga solo en
+# `docker compose up` sin -f) agrega lo de desarrollo (puertos en localhost).
+#
+#   Producción:  docker compose -f compose.yml up -d        (perfiles según COMPOSE_PROFILES en .env; o docker/deploy.sh)
+#   Desarrollo:  docker compose up -d app-db                (Postgres propio en 127.0.0.1:5440)
+#
+#   nginx  : reverse proxy con TLS (perfil `nginx`). Se usa cuando el host no tiene otro servidor web en 80/443.
+#            Los certificados los pone IT en TLS_DIR/live/PUBLIC_HOST/ (formato certbot); nginx los monta de solo lectura.
+#            Si el host ya tiene Apache en 80/443 (servidor del legacy), NO se levanta este servicio: Apache hace de
+#            proxy a 127.0.0.1:APP_PORT con docker/apache/naps-ccc.conf.example.
+#   app    : imagen de producción (Next standalone, perfil `prod`). Publicada SOLO en 127.0.0.1:APP_PORT (para el proxy
+#            del host y el smoke test); desde afuera se entra por nginx o Apache. Llega al PostGIS real, a spi40 y a la
+#            OLT por la red del host (sin redes Docker especiales). Copia local del PostGIS: compose.local-gis.yml.
+#   app-db : PostgreSQL 16 propio del proyecto (usuarios y sesiones). Sin puertos publicados.
+#
+# Variables en .env (junto a este archivo): COMPOSE_PROFILES (prod,nginx | prod), PUBLIC_HOST, TLS_DIR, HTTP_PORT,
+# HTTPS_PORT, APP_PORT, APP_TAG. Secretos en .env.db y .env.docker.
+
+x-logging: &log
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+services:
+  nginx:
+    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    profiles: ["nginx"]
+    container_name: naps-ccc-nginx
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    environment:
+      # Hostname público, en .env junto a este archivo. docker/deploy.sh verifica que esté definido.
+      PUBLIC_HOST: "${PUBLIC_HOST:-}"
+      # La imagen renderiza docker/nginx/naps.conf.template con envsubst; solo debe sustituir PUBLIC_HOST.
+      NGINX_ENVSUBST_FILTER: "^PUBLIC_HOST$$"
+    volumes:
+      - ./docker/nginx/naps.conf.template:/etc/nginx/templates/naps.conf.template:ro
+      # Anula el vhost de bienvenida que trae la imagen (respondería a hosts desconocidos en :80).
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Webroot del desafío ACME (certbot --webroot -w docker/nginx/acme).
+      - ./docker/nginx/acme:/var/www/acme:ro
+      # Certificados: /etc/letsencrypt del host (certbot). Para pruebas en LAN, TLS_DIR=./docker/nginx/certs (autofirmado).
+      - ${TLS_DIR:-/etc/letsencrypt}:/etc/letsencrypt:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    # El master de nginx arranca como root (lee la clave privada y abre :80/:443) y baja los workers a `nginx`.
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE, CHOWN, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
+    logging: *log
+    restart: unless-stopped
+
+  app:
+    profiles: ["prod"]
+    image: naps-ccc-app:${APP_TAG:-local}
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_TAG:-local}
+    container_name: naps-ccc-app
+    # Solo loopback del host: lo usan el Apache del host (si hace de proxy) y el smoke test de deploy.sh.
+    # nginx llega por la red interna de compose (app:3000). Nunca publicar en 0.0.0.0.
+    ports:
+      - "127.0.0.1:${APP_PORT:-3110}:3000"
+    env_file: .env.docker
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    cpus: "2"
+    depends_on:
+      app-db:
+        condition: service_healthy
+    logging: *log
+    restart: unless-stopped
+
+  app-db:
+    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+    container_name: naps-ccc-db
+    env_file: .env.db
+    environment:
+      TZ: America/Argentina/Tucuman
+    volumes:
+      - app-db-data:/var/lib/postgresql/data
+      # Solo corre al inicializar el volumen: crea el rol de la app (sin superusuario).
+      - ./docker/app-db/20-app-role.sh:/docker-entrypoint-initdb.d/20-app-role.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt: ["no-new-privileges:true"]
+    logging: *log
+    restart: unless-stopped
+
+volumes:
+  app-db-data:

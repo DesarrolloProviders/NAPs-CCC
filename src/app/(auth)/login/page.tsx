@@ -2,6 +2,7 @@ import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/features/auth/LoginForm";
+import { destinoSeguro } from "@/lib/auth/destino-seguro";
 import { getSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Ingresar" };
@@ -9,7 +10,8 @@ export const metadata: Metadata = { title: "Ingresar" };
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const session = await getSession();
   const { next } = await searchParams;
-  const destino = typeof next === "string" && next.startsWith("/") ? next : "/buscar";
+  // Solo rutas internas: evita que ?next=//otro-sitio saque al usuario de la app tras el login.
+  const destino = destinoSeguro(next);
   if (session) redirect(destino as Route);
 
   return (

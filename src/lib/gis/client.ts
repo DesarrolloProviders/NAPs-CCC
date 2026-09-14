@@ -4,8 +4,9 @@ import { env } from "@/lib/env";
 
 /**
  * Conexión al PostGIS de NAPs (servidor GIS / QGIS). SOLO LECTURA.
- * `default_transaction_read_only` hace que cualquier escritura accidental falle
- * aunque el usuario tenga permisos.
+ * `default_transaction_read_only` hace que cualquier escritura accidental falle aunque el usuario
+ * tenga permisos. Es una red de seguridad, no un control de acceso: en producción la URL debe usar
+ * un rol con GRANT SELECT únicamente (ver .env.example).
  */
 declare global {
   var __gisSql: Sql | undefined;
@@ -13,13 +14,17 @@ declare global {
 
 function crear(): Sql {
   return postgres(env.GIS_DATABASE_URL, {
-    max: 4,
+    // /buscar hace 2 consultas por render (localidades cacheadas + búsqueda): margen para varios usuarios a la vez.
+    max: 6,
     idle_timeout: 30,
     connect_timeout: 10,
     connection: {
       application_name: "naps-ccc-gis",
       default_transaction_read_only: true,
       search_path: `${env.GIS_SCHEMA},public`,
+      // La búsqueda por radio responde en ms; una consulta más lenta es un problema del servidor, no de la app.
+      statement_timeout: 5_000,
+      idle_in_transaction_session_timeout: 5_000,
     },
     // PostGIS devuelve numeric como string: lo convertimos a number.
     types: { numeric: { to: 1700, from: [1700], serialize: (x: number) => String(x), parse: Number } },

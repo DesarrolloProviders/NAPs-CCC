@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BuscarPanel } from "@/features/naps/BuscarPanel";
 import { buscarNaps, limitesBusqueda, listarLocalidades } from "@/features/naps/queries";
 import { parsearBusqueda, type BusquedaParams } from "@/features/naps/search-params";
+import { getActorOrRedirect } from "@/lib/auth/session";
 import { loggerDe } from "@/lib/logger";
 
 export const metadata: Metadata = { title: "Buscar NAPs" };
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 const log = loggerDe("http");
 
 export default async function BuscarPage({ searchParams }: PageProps<"/buscar">) {
+  // El layout ya lo hace; se repite acá para que la página siga protegida si algún día se mueve de grupo.
+  await getActorOrRedirect();
   const sp = await searchParams;
   const limites = limitesBusqueda();
 

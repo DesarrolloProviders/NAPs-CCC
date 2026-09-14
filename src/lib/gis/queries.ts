@@ -49,7 +49,11 @@ function aResumen(f: FilaResumen): NapResumen {
   };
 }
 
-/** Expresión SQL de localidad normalizada (sin tildes, minúsculas). */
+/**
+ * Expresión SQL de localidad normalizada (sin tildes, minúsculas).
+ * INVARIANTE: es una constante literal y es lo ÚNICO que pasa por `gisSql.unsafe` en el proyecto.
+ * Nunca interpolar acá nada que venga del usuario o del entorno.
+ */
 const LOCALIDAD_NORM = `translate(lower(trim(localidad)), 'áéíóúüñ', 'aeiouun')`;
 
 /**

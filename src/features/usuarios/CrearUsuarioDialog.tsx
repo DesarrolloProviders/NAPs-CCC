@@ -80,8 +80,8 @@ export function CrearUsuarioDialog() {
             {errores.email ? <p className="text-xs text-destructive">{errores.email}</p> : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña (mínimo 10 caracteres)</Label>
-            <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={10} />
+            <Label htmlFor="password">Contraseña (mínimo 4 caracteres)</Label>
+            <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={4} />
             {errores.password ? <p className="text-xs text-destructive">{errores.password}</p> : null}
           </div>
           <div className="space-y-2">

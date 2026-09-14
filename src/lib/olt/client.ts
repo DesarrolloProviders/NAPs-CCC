@@ -3,6 +3,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { loggerDe } from "@/lib/logger";
 import { CacheTtl } from "@/lib/spi40/cache";
+import { leerTextoAcotado } from "@/lib/http/leer-texto-acotado";
 
 /**
  * Herramientas OLT (smi): estado en vivo de una ONT por MAC.
@@ -24,6 +25,8 @@ export interface EstadoOnt {
 }
 
 const respuestaSchema = z.record(z.string(), z.unknown());
+/** Una respuesta de ont-data pesa unos pocos KB: cualquier cosa mayor es un error o un abuso. */
+const MAX_RESPUESTA_BYTES = 1024 * 1024;
 
 declare global {
   var __oltCache: CacheTtl<EstadoOnt> | undefined;
@@ -39,9 +42,28 @@ export function urlOnt(mac: string): string {
   return u.toString();
 }
 
+/**
+ * Semáforo global: tope de consultas simultáneas a la OLT en todo el proceso, sin importar cuántos
+ * usuarios pidan a la vez (OLT_CONCURRENCIA es el tope por request; este es el de la instancia).
+ */
+let enVueloGlobal = 0;
+const colaGlobal: Array<() => void> = [];
+async function conCupoGlobal<T>(fn: () => Promise<T>): Promise<T> {
+  if (enVueloGlobal >= env.OLT_MAX_EN_VUELO) await new Promise<void>((resolver) => colaGlobal.push(resolver));
+  enVueloGlobal++;
+  try {
+    return await fn();
+  } finally {
+    enVueloGlobal--;
+    colaGlobal.shift()?.();
+  }
+}
+
 export async function getEstadoOnt(mac: string, opciones: { usarCache?: boolean; timeoutMs?: number } = {}): Promise<EstadoOnt> {
   const clave = mac.toLowerCase();
-  return cache.obtener(clave, () => consultar(clave, opciones.timeoutMs ?? env.OLT_TIMEOUT_MS), { usarCache: opciones.usarCache ?? true });
+  return cache.obtener(clave, () => conCupoGlobal(() => consultar(clave, opciones.timeoutMs ?? env.OLT_TIMEOUT_MS)), {
+    usarCache: opciones.usarCache ?? true,
+  });
 }
 
 async function consultar(mac: string, timeoutMs: number): Promise<EstadoOnt> {
@@ -53,7 +75,7 @@ async function consultar(mac: string, timeoutMs: number): Promise<EstadoOnt> {
       log.warn({ mac, status: r.status, ms: ms(inicio) }, "HTTP no OK");
       return base;
     }
-    const texto = (await r.text()).trim();
+    const texto = (await leerTextoAcotado(r, MAX_RESPUESTA_BYTES)).trim();
     if (!texto || texto === "null" || texto === "false") {
       log.info({ mac, ms: ms(inicio) }, "sin datos para la MAC");
       return base;

@@ -1,0 +1,11 @@
+# Desarrollo. Docker Compose lo fusiona automáticamente con compose.yml cuando NO se pasa -f.
+# Producción debe levantarse con `docker compose -f compose.yml ...` para que esto no aplique.
+services:
+  app-db:
+    ports:
+      - "127.0.0.1:5440:5432"
+
+  # Probar la imagen de producción en la PC de desarrollo sin nginx ni TLS (la app ya se publica en 127.0.0.1:APP_PORT):
+  #   APP_PORT=3120 docker compose --profile prod up -d app
+  # (BETTER_AUTH_URL debe ser https en producción; para esta prueba usar NODE_ENV=development en .env.docker, o levantar
+  # también nginx con un certificado autofirmado, ver README → "Probar en la LAN").

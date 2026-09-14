@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: typecheck · lint · tests · imagen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias (lock estricto)
+        run: npm ci --no-audit --no-fund
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests unitarios
+        run: npm test
+
+      - name: Vulnerabilidades en dependencias de producción
+        # Informativo al principio; pasar a bloqueante (quitar continue-on-error) cuando el árbol esté limpio.
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+      - name: Secretos que no deben estar en el repo
+        run: |
+          ! git grep -nE 'ProvQgis123|fcc0cc22c8e7' -- ':!.github/workflows/ci.yml'
+
+      - name: Build de la imagen de producción
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: naps-ccc-app:ci
+          build-args: APP_VERSION=${{ github.sha }}
+
+  # Integración (PostGIS local) y e2e (spi40/OLT internos) necesitan la red de la empresa:
+  # correrlos con `npm run test:integration` / `npm run test:e2e` en una PC de desarrollo o en un runner self-hosted.

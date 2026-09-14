@@ -13,7 +13,6 @@ beforeAll(() => {
     BETTER_AUTH_URL: "http://localhost:3110",
     ADMIN_SEED_EMAIL: "a@b.co",
     ADMIN_SEED_PASSWORD: "0123456789",
-    CRON_SECRET: "12345678",
     LOG_LEVEL: "silent",
   });
 });

@@ -24,7 +24,7 @@ export function UsuariosTabla({ usuarios, actorId }: { usuarios: UsuarioVista[];
   }
 
   function onResetear(u: UsuarioVista) {
-    const password = window.prompt(`Nueva contraseña para ${u.email} (mínimo 10 caracteres):`);
+    const password = window.prompt(`Nueva contraseña para ${u.email} (mínimo 4 caracteres):`);
     if (password === null) return;
     ejecutar(resetearPassword({ userId: u.id, password }), "Contraseña actualizada");
   }

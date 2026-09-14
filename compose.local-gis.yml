@@ -1,0 +1,14 @@
+# OPCIONAL, solo desarrollo: hace que el contenedor `app` use la copia local del PostGIS (../legacy-php) en vez del
+# servidor GIS real. Esa copia vive en la red Docker `legacy-php_napnet` con la MISMA IP que el servidor real
+# (192.168.100.212), así que basta con unir `app` a esa red. Ver README → "Copia local del PostGIS".
+#   docker compose -f compose.yml -f compose.override.yml -f compose.local-gis.yml --profile prod up -d app
+services:
+  app:
+    networks:
+      - default
+      - napnet
+
+networks:
+  napnet:
+    external: true
+    name: legacy-php_napnet

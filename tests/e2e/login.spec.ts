@@ -23,6 +23,22 @@ test.describe("autenticación", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
+  test("?next= hacia otro sitio no saca al usuario de la app (open redirect)", async ({ page }) => {
+    await page.goto("/login?next=//evil.example/buscar");
+    await page.getByLabel("Email").fill(USUARIOS.usuario.email);
+    await page.getByLabel("Contraseña").fill(USUARIOS.usuario.password);
+    await page.getByRole("button", { name: "Ingresar" }).click();
+    await expect(page).toHaveURL(/^http:\/\/localhost:3110\/buscar/);
+  });
+
+  test("?next= interno se respeta", async ({ page }) => {
+    await page.goto("/login?next=%2Fbuscar%3Fradio%3D300");
+    await page.getByLabel("Email").fill(USUARIOS.usuario.email);
+    await page.getByLabel("Contraseña").fill(USUARIOS.usuario.password);
+    await page.getByRole("button", { name: "Ingresar" }).click();
+    await expect(page).toHaveURL(/\/buscar\?radio=300/);
+  });
+
   test("un usuario común no ve Usuarios y recibe 404 en /admin/usuarios", async ({ page }) => {
     await login(page, USUARIOS.usuario);
     await expect(page.getByRole("link", { name: "Usuarios" })).toHaveCount(0);

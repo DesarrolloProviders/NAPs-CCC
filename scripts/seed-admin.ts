@@ -63,6 +63,7 @@ async function upsertUsuario(opts: { email: string; nombre: string; rol: string;
 }
 
 async function main() {
+  if (!env.ADMIN_SEED_EMAIL || !env.ADMIN_SEED_PASSWORD) throw new Error("Definí ADMIN_SEED_EMAIL y ADMIN_SEED_PASSWORD en .env.local para correr el seed");
   await upsertUsuario({ email: env.ADMIN_SEED_EMAIL, nombre: "Administrador", rol: "admin", password: env.ADMIN_SEED_PASSWORD });
   await appSql.end({ timeout: 2 });
 }

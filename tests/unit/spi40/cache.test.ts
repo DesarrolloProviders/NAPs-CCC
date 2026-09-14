@@ -26,13 +26,29 @@ describe("CacheTtl", () => {
     expect(productor).toHaveBeenCalledTimes(1);
   });
 
-  it("con usarCache=false siempre ejecuta y no guarda", async () => {
+  it("con usarCache=false saltea la lectura pero guarda el valor fresco", async () => {
     const c = new CacheTtl<number>(1000);
     let n = 0;
     const productor = async () => ++n;
-    expect(await c.obtener("k", productor, { usarCache: false })).toBe(1);
+    expect(await c.obtener("k", productor)).toBe(1);
     expect(await c.obtener("k", productor, { usarCache: false })).toBe(2);
-    expect(c.get("k")).toBeUndefined();
+    // El siguiente pedido normal ve el valor fresco, no el viejo.
+    expect(await c.obtener("k", productor)).toBe(2);
+    expect(c.get("k")).toBe(2);
+  });
+
+  it("con usarCache=false sigue deduplicando las llamadas en vuelo", async () => {
+    const c = new CacheTtl<number>(1000);
+    const productor = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+      return 7;
+    });
+    await Promise.all([
+      c.obtener("k", productor, { usarCache: false }),
+      c.obtener("k", productor, { usarCache: false }),
+      c.obtener("k", productor),
+    ]);
+    expect(productor).toHaveBeenCalledTimes(1);
   });
 
   it("no cachea errores", async () => {
@@ -45,5 +61,27 @@ describe("CacheTtl", () => {
     };
     await expect(c.obtener("k", productor)).rejects.toThrow("falla");
     expect(await c.obtener("k", productor)).toBe(2);
+  });
+
+  it("no crece más allá de maxEntradas (expulsa la más vieja)", () => {
+    const c = new CacheTtl<number>(60_000, 3);
+    c.set("a", 1);
+    c.set("b", 2);
+    c.set("c", 3);
+    c.set("d", 4);
+    expect(c.size).toBe(3);
+    expect(c.get("a")).toBeUndefined();
+    expect(c.get("d")).toBe(4);
+  });
+
+  it("barre las entradas vencidas", () => {
+    vi.useFakeTimers();
+    const c = new CacheTtl<number>(100);
+    c.set("a", 1);
+    vi.advanceTimersByTime(101);
+    c.set("b", 2, 10_000);
+    c.barrer();
+    expect(c.size).toBe(1);
+    vi.useRealTimers();
   });
 });
