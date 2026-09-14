@@ -1,7 +1,7 @@
 #!/bin/sh
 # Backup de la base propia (usuarios, sesiones, auditoría) con pg_dump en formato custom, comprimido.
 #   docker/backup.sh                → backups/naps_ccc_<fecha>.dump.gz  (retención: BACKUP_RETENCION_DIAS, default 14)
-# Programar en el cron del host, p. ej.:  0 3 * * * cd /opt/naps-ccc && docker/backup.sh >> backups/backup.log 2>&1
+# Programar en el cron del host, p. ej.:  0 3 * * * cd /home/<usuario>/naps-ccc && docker/backup.sh >> backups/backup.log 2>&1
 # Copiar el directorio backups/ fuera del host (rsync, almacenamiento de objetos); un backup en el mismo disco no es un backup.
 set -eu
 cd "$(dirname "$0")/.."

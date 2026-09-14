@@ -19,8 +19,8 @@ El detalle técnico está en el [README](README.md); acá está solo lo que hay 
 
 | Requisito | Detalle |
 |---|---|
-| Docker Engine + Compose v2 | `docker compose version` debe responder. Instalación oficial: https://docs.docker.com/engine/install/ |
-| `git` | para clonar y actualizar el repo |
+| Docker Engine + Compose v2 | `docker compose version` debe responder. Instalación oficial: https://docs.docker.com/engine/install/. El usuario que corre `deploy.sh` no necesita sudo, pero sí estar en el grupo `docker` (`sudo usermod -aG docker <usuario>` y volver a iniciar sesión; probar con `docker ps`). |
+| `git` | para clonar y actualizar el repo. Si el repo de GitHub es privado, el `clone` pide usuario y un token de acceso personal. |
 | Salida a internet **solo para el build** | Docker Hub y el registro de npm, la primera vez y en cada actualización. En operación no hace falta. |
 | Red interna | el servidor ya llega al PostGIS (`192.168.100.212:5432`), a spi40 y a la OLT (`192.168.43.100`): es la misma red que usa el legacy. |
 | DNS y certificado | `nap.viaccc.com` ya apunta a este servidor y el certificado ya está en `/etc/letsencrypt/live/nap.viaccc.com/`. IT lo sigue renovando como hasta ahora. No hay que tocar nada. |
@@ -29,8 +29,7 @@ El detalle técnico está en el [README](README.md); acá está solo lo que hay 
 ## Instalación (una vez)
 
 ```bash
-sudo mkdir -p /opt/naps-ccc && sudo chown "$USER" /opt/naps-ccc
-git clone <URL del repo> /opt/naps-ccc && cd /opt/naps-ccc
+git clone https://github.com/DesarrolloProviders/NAPs-CCC.git ~/naps-ccc && cd ~/naps-ccc
 
 cp .env.compose.example .env        # ya trae PUBLIC_HOST=nap.viaccc.com, COMPOSE_PROFILES=prod, APP_PORT=3110
 cp .env.db.example .env.db          # dos contraseñas: openssl rand -base64 24
@@ -73,7 +72,7 @@ Es el único paso fuera de Docker. Hoy Apache tiene dos vhosts con `ServerName n
 `rewrite`) ya están habilitados en este servidor.
 
 ```bash
-cd /opt/naps-ccc
+cd ~/naps-ccc
 sudo cp docker/apache/naps-ccc.conf.example /etc/apache2/sites-available/naps-ccc.conf
 sudo sed -i 's/naps\.example\.com/nap.viaccc.com/g' /etc/apache2/sites-available/naps-ccc.conf
 sudo a2dissite nap.viaccc.com nap.viaccc.com-le-ssl
@@ -109,12 +108,12 @@ Si el proxy HTTPS estuviera en otra máquina y no en este servidor: `APP_BIND=<I
 
 ## Operar
 
-| Tarea | Comando (desde `/opt/naps-ccc`) |
+| Tarea | Comando (desde `~/naps-ccc`) |
 |---|---|
 | Actualizar a una versión nueva | `git pull && docker/deploy.sh` (Apache no se toca) |
 | Volver a la anterior | `APP_TAG=<sha> docker compose -f compose.yml up -d app` (quedan las 3 últimas imágenes) |
 | Logs | `docker compose -f compose.yml logs -f app` |
-| Backup diario (cron) | `0 3 * * * cd /opt/naps-ccc && docker/backup.sh >> backups/backup.log 2>&1` y copiar `backups/` fuera del host |
+| Backup diario (cron) | `0 3 * * * cd /home/<usuario>/naps-ccc && docker/backup.sh >> backups/backup.log 2>&1` (ruta completa, cron no expande `~`) y copiar `backups/` fuera del host |
 | Restaurar | `docker/restore.sh backups/<archivo>` |
 | Certificado renovado | `sudo systemctl reload apache2` (como con el legacy; Docker no interviene) |
 | Apagar / encender todo | `docker compose -f compose.yml down` / `docker compose -f compose.yml up -d` (los datos quedan en el volumen `app-db-data`) |
