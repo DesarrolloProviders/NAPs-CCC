@@ -74,7 +74,7 @@ El frente HTTPS se elige con `COMPOSE_PROFILES` en `.env`:
 | Escenario | `COMPOSE_PROFILES` | Quién termina TLS |
 |---|---|---|
 | **A. Host dedicado** (nada más escucha en 80/443) | `prod,nginx` | `nginx` del compose (`docker/nginx/naps.conf.template`), certificados desde `TLS_DIR/live/PUBLIC_HOST/` |
-| **B. Servidor del legacy** (Apache ya sirve otras apps en 80/443) | `prod` | el Apache del host, con el vhost `docker/apache/naps-ccc.conf.example` reenviando a `127.0.0.1:APP_PORT`. nginx no se levanta. |
+| **B. Servidor del legacy** (Apache ya sirve otras apps en 80/443). **Es lo que se entrega a IT: ver `ENTREGA.md`.** | `prod` | el Apache del host, con el vhost `docker/apache/naps-ccc.conf.example` reenviando a `APP_BIND:APP_PORT` (default `127.0.0.1:3110`). nginx no se levanta. |
 
 En ambos la app recibe `X-Forwarded-For` con la IP real (rate limit del login), `X-Forwarded-Proto: https` y el `Host` original.
 

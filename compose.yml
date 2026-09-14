@@ -59,10 +59,11 @@ services:
       args:
         APP_VERSION: ${APP_TAG:-local}
     container_name: naps-ccc-app
-    # Solo loopback del host: lo usan el Apache del host (si hace de proxy) y el smoke test de deploy.sh.
-    # nginx llega por la red interna de compose (app:3000). Nunca publicar en 0.0.0.0.
+    # Puerto que se entrega a IT: el proxy HTTPS del host (Apache) reenvía nap.viaccc.com a APP_BIND:APP_PORT.
+    # APP_BIND=127.0.0.1 (default) si el proxy corre en el mismo servidor; la IP de la LAN del servidor solo si el proxy
+    # está en otra máquina (nunca 0.0.0.0 en un host expuesto a internet: la app no termina TLS).
     ports:
-      - "127.0.0.1:${APP_PORT:-3110}:3000"
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3110}:3000"
     env_file: .env.docker
     init: true
     read_only: true
