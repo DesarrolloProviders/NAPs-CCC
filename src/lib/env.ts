@@ -58,11 +58,9 @@ const esquema = z
 
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
     // TZ la lee Node directamente (Dockerfile / SO); la zona de negocio para formatear está en src/lib/fechas.ts.
-  })
-  .refine((e) => e.NODE_ENV !== "production" || e.BETTER_AUTH_URL.startsWith("https://"), {
-    path: ["BETTER_AUTH_URL"],
-    message: "En producción BETTER_AUTH_URL debe ser https:// (las cookies de sesión son Secure)",
   });
+// BETTER_AUTH_URL puede ser http:// (pruebas en la LAN, acceso directo al puerto). HTTPS lo termina el proxy del host
+// (Apache/nginx); cuando la URL pública es https, las cookies de sesión pasan a ser Secure (src/lib/auth/auth.ts).
 
 export type Env = z.infer<typeof esquema>;
 

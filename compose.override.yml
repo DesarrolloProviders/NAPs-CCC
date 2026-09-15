@@ -6,6 +6,4 @@ services:
       - "127.0.0.1:5440:5432"
 
   # Probar la imagen de producción en la PC de desarrollo sin nginx ni TLS (la app ya se publica en 127.0.0.1:APP_PORT):
-  #   APP_PORT=3120 docker compose --profile prod up -d app
-  # (BETTER_AUTH_URL debe ser https en producción; para esta prueba usar NODE_ENV=development en .env.docker, o levantar
-  # también nginx con un certificado autofirmado, ver README → "Probar en la LAN").
+  #   APP_PORT=3120 docker compose --profile prod up -d app      (con BETTER_AUTH_URL=http://localhost:3120 en .env.docker)

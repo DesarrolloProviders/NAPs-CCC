@@ -36,7 +36,9 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "naps",
-    useSecureCookies: env.NODE_ENV === "production",
+    // Secure solo si la URL pública es https (detrás de Apache/nginx con TLS). Con http:// (LAN, acceso directo al
+    // puerto) la cookie viaja sin el flag; si no, el navegador la descarta y el login nunca "prende".
+    useSecureCookies: env.BETTER_AUTH_URL.startsWith("https://"),
     // Detrás de nginx: la IP real viene en X-Forwarded-For (nginx la fija a $remote_addr y descarta la que traiga el cliente).
     // Si se agrega otro salto (Cloudflare, otro proxy), sumar `trustedProxies: ["<ip/cidr del salto>"]`.
     ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },

@@ -29,7 +29,8 @@ const csp = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  ...(esProd ? ["upgrade-insecure-requests"] : []),
+  // Sin `upgrade-insecure-requests`: la app también se sirve por http:// directo en la LAN (puerto 3110) y esa directiva
+  // hacía que el navegador pidiera CSS/JS por https y los descartara. HTTPS lo impone el proxy del host cuando corresponde.
 ].join("; ");
 
 const cabecerasSeguridad = [

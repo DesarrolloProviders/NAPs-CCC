@@ -32,7 +32,7 @@ El detalle técnico está en el [README](README.md); acá está solo lo que hay 
 git clone https://github.com/DesarrolloProviders/NAPs-CCC.git ~/naps-ccc && cd ~/naps-ccc
 
 cp .env.compose.example .env        # ya trae PUBLIC_HOST=nap.viaccc.com, COMPOSE_PROFILES=prod, APP_PORT=3110
-cp .env.db.example .env.db          # dos contraseñas: openssl rand -base64 24
+cp .env.db.example .env.db          # dos contraseñas: openssl rand -hex 24 (solo letras y números: van dentro de una URL)
 cp .env.docker.example .env.docker  # completar según la tabla de abajo
 chmod 600 .env.db .env.docker
 ```
@@ -42,9 +42,9 @@ En `.env.docker` completar:
 | Variable | Valor |
 |---|---|
 | `APP_DATABASE_URL` | `postgres://naps_app:<NAPS_APP_PASSWORD de .env.db>@app-db:5432/naps_ccc` |
-| `GIS_DATABASE_URL` | `postgres://<rol solo lectura>:<clave>@192.168.100.212:5432/cccqgis` |
+| `GIS_DATABASE_URL` | `postgres://<rol solo lectura>:<clave>@192.168.100.212:5432/cccqgis`. Si la clave que entrega IT tiene `/`, `+`, `@`, `:`, `#` o `?`, escribirla codificada (`/`→`%2F`, `+`→`%2B`, `@`→`%40`, `:`→`%3A`, `#`→`%23`, `?`→`%3F`). |
 | `SPI40_BASE_URL` · `OLT_BASE_URL` | las URLs internas de spi40 y de `ftth.tools_box.php` (las mismas que usa el legacy) |
-| `BETTER_AUTH_URL` | `https://nap.viaccc.com` |
+| `BETTER_AUTH_URL` | `https://nap.viaccc.com` (la URL tal cual la escriben los usuarios; para probar directo por IP antes del corte, `http://192.168.100.130:3110`) |
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
 | `HEALTH_TOKEN` | `openssl rand -hex 32` (para el monitoreo profundo) |
 | `ADMIN_SEED_EMAIL` · `ADMIN_SEED_PASSWORD` | el primer administrador; **borrar las dos líneas después del primer login** |

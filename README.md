@@ -67,6 +67,8 @@ las viejas en `.env.db`, o se recrea el volumen (`docker compose down -v` borra 
 Un solo host con Docker Compose: un frente HTTPS → `app` (Next standalone, publicada solo en `127.0.0.1:APP_PORT`) →
 `app-db` (Postgres propio). La app llega al PostGIS real, a spi40 y a la OLT por la red del host (sin redes Docker especiales).
 Los usuarios entran desde fuera de la LAN; el navegador solo habla con el frente HTTPS (más tiles de OSM y Nominatim, públicos).
+La app no exige HTTPS por sí misma: también funciona por `http://IP:APP_PORT` dentro de la LAN (pruebas, acceso directo); las
+cookies pasan a `Secure` cuando `BETTER_AUTH_URL` es `https://`.
 Los **certificados los gestiona IT** (certbot en el host, en `/etc/letsencrypt/live/<host>/`, como con el legacy).
 
 El frente HTTPS se elige con `COMPOSE_PROFILES` en `.env`:
@@ -91,7 +93,7 @@ En ambos la app recibe `X-Forwarded-For` con la IP real (rate limit del login), 
 
 ```bash
 cp .env.compose.example .env          # PUBLIC_HOST, COMPOSE_PROFILES (prod,nginx | prod), APP_PORT; TLS_DIR si no es /etc/letsencrypt
-cp .env.db.example .env.db            # contraseñas del Postgres propio (openssl rand -base64 24)
+cp .env.db.example .env.db            # contraseñas del Postgres propio (openssl rand -hex 24: sin / + @, van dentro de una URL)
 cp .env.docker.example .env.docker    # GIS_DATABASE_URL (rol solo lectura), spi40/OLT, BETTER_AUTH_URL=https://PUBLIC_HOST,
                                       # BETTER_AUTH_SECRET (openssl rand -base64 32), HEALTH_TOKEN, ADMIN_SEED_* (solo esta vez)
 chmod 600 .env.db .env.docker
@@ -139,7 +141,7 @@ backup antes de cada despliegue por si hay que volver atrás.
 ### Seguridad (resumen de lo que hace la app)
 
 - Cabeceras: CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` (`next.config.ts`). Sin `X-Powered-By`.
-- Sesión en cookie `Secure`/`HttpOnly`/`SameSite=Lax`; la caché de cookie dura `AUTH_COOKIE_CACHE_S` (60 s): es lo máximo que un
+- Sesión en cookie `HttpOnly`/`SameSite=Lax`, y `Secure` cuando `BETTER_AUTH_URL` es `https://` (detrás del proxy con TLS); la caché de cookie dura `AUTH_COOKIE_CACHE_S` (60 s): es lo máximo que un
   usuario dado de baja o degradado conserva el acceso. Cambiar rol o resetear contraseña cierra las sesiones del afectado.
 - Rate limit de better-auth por IP real (`X-Forwarded-For` que fija nginx, sin aceptar la del cliente): 10 intentos de login por minuto por IP.
 - nginx: TLS 1.2/1.3, sin versión en cabeceras, rechaza el handshake para otros nombres de host, `/api/health` solo desde redes

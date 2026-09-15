@@ -9,6 +9,15 @@ if (!url) {
   console.error("Falta APP_DATABASE_URL");
   process.exit(1);
 }
+try {
+  new URL(url);
+} catch {
+  console.error(
+    "[migrate] APP_DATABASE_URL no es una URL válida. Si la contraseña contiene / + @ : # o ?, hay que escribirla codificada" +
+      " (por ejemplo / → %2F, + → %2B, @ → %40), o generar una sin esos caracteres: openssl rand -hex 24.",
+  );
+  process.exit(1);
+}
 
 const INTENTOS = 6;
 const CODIGOS_TRANSITORIOS = new Set(["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "ENOTFOUND", "57P03", "CONNECT_TIMEOUT"]);
